@@ -1,0 +1,15 @@
+[package]
+name = "ip2location-country-multilingual"
+version = "0.0.0"
+authors = ["vkill <vkill.net@gmail.com>"]
+edition = "2021"
+description = "IP2Location™ Country Multilingual Database"
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/bk-rs/ip2location-rs"
+homepage = "https://github.com/bk-rs/ip2location-rs"
+documentation = "https://docs.rs/ip2location-country-multilingual"
+keywords = []
+categories = []
+readme = "README.md"
+
+[dependencies]
