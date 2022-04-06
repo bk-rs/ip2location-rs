@@ -13,3 +13,5 @@ categories = []
 readme = "README.md"
 
 [dependencies]
+serde = { version = "1.0", default_features = false, features = ["std", "derive"] }
+serde-enum-str = { version = "0.2", default-features = false }
