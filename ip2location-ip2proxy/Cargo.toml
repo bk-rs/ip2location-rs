@@ -16,3 +16,9 @@ readme = "README.md"
 serde = { version = "1.0", default_features = false, features = ["std", "derive"] }
 serde-enum-str = { version = "0.2", default-features = false }
 chrono = { version = "0.4", default-features = false }
+async-fs = { version = "1.5", default-features = false }
+futures-util = { version = "0.3", default-features = false, features = ["std", "io"] }
+tokio = { version = "1.17", default-features = false, features = ["fs", "io-util"] }
+
+[dev-dependencies]
+tokio = { version = "1.17", features = ["macros", "rt"] }

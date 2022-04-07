@@ -1,12 +1,9 @@
 use core::{fmt, ops::ControlFlow};
-use std::{
-    io::{BufRead, Error as IoError, Read as _},
-    net::{Ipv4Addr, Ipv6Addr},
-};
+use std::io::{BufRead, Error as IoError, Read as _};
 
 use chrono::{Datelike, NaiveDate};
 
-use crate::bin_format::field::Field;
+use crate::bin_format::{field::Field, ipv4_index::Ipv4Index, ipv6_index::Ipv6Index};
 
 //
 pub const LEN: usize = 5 + 6 * 4 + 2 + 4;
@@ -133,36 +130,12 @@ pub struct IpIndexInfo {
 }
 
 impl IpIndexInfo {
-    pub const fn ipv4_index_size() -> u32 {
-        // https://github.com/ip2location/ip2proxy-rust/blob/5bdd3ef61c2e243c1b61eda1475ca23eab2b7240/src/db.rs#L190
-        (u32::MAX >> 16) << 3
-    }
-
-    pub fn ipv4_index(ipv4_addr: Ipv4Addr) -> u32 {
-        (u32::from(ipv4_addr) >> 16) << 3
-    }
-
     pub fn ipv4_index_end(&self) -> u32 {
-        // https://github.com/ip2location/ip2proxy-rust/blob/5bdd3ef61c2e243c1b61eda1475ca23eab2b7240/src/db.rs#L191-L192
-        self.index_start + Self::ipv4_index_size() + 4 + 4
-    }
-
-    pub const fn ipv6_index_size() -> u32 {
-        // https://github.com/ip2location/ip2proxy-rust/blob/5bdd3ef61c2e243c1b61eda1475ca23eab2b7240/src/db.rs#L217-L218
-        let ipv6_addr = Ipv6Addr::new(
-            0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff,
-        );
-
-        ((ipv6_addr.octets()[0] as u32) * 256 + (ipv6_addr.octets()[1] as u32)) << 3
-    }
-
-    pub fn ipv6_index(ipv6_addr: Ipv6Addr) -> u32 {
-        ((ipv6_addr.octets()[0] as u32) * 256 + (ipv6_addr.octets()[1] as u32)) << 3
+        self.index_start + Ipv4Index::len()
     }
 
     pub fn ipv6_index_end(&self) -> u32 {
-        // https://github.com/ip2location/ip2proxy-rust/blob/5bdd3ef61c2e243c1b61eda1475ca23eab2b7240/src/db.rs#L219-L220
-        self.index_start + Self::ipv6_index_size() + 4 + 4
+        self.index_start + Ipv6Index::len()
     }
 }
 
@@ -578,20 +551,6 @@ mod tests {
 
     #[test]
     fn test_ip_index_info() {
-        assert_eq!(IpIndexInfo::ipv4_index_size(), 524280);
-        assert_eq!(IpIndexInfo::ipv6_index_size(), 524280);
-
-        assert_eq!(
-            IpIndexInfo::ipv4_index(Ipv4Addr::new(255, 255, 255, 255)),
-            524280
-        );
-        assert_eq!(
-            IpIndexInfo::ipv6_index(Ipv6Addr::new(
-                0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff,
-            )),
-            524280
-        );
-
         let ipv4_info = IpIndexInfo { index_start: 65 };
         assert_eq!(ipv4_info.ipv4_index_end(), 524353);
 
