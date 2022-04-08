@@ -442,57 +442,54 @@ mod tests {
         io::{Cursor, ErrorKind as IoErrorKind},
     };
 
-    use crate::bin_format::TEST_BIN_FILES;
+    use crate::bin_format::TEST_20220401_BIN_FILES;
 
     #[test]
     fn test_parse_20220401() -> Result<(), Box<dyn error::Error>> {
-        for (path, r#type) in TEST_BIN_FILES {
-            let mut f = match File::open(path) {
-                Ok(x) => x,
+        for (path, r#type) in TEST_20220401_BIN_FILES {
+            match File::open(path) {
+                Ok(mut f) => {
+                    let mut buf = vec![0; 64];
+                    f.read_exact(&mut buf)?;
+
+                    //
+                    let mut parser = Parser::new();
+                    match parser.parse(&mut Cursor::new(buf))? {
+                        ControlFlow::Break((n_parsed, header)) => {
+                            assert_eq!(n_parsed, LEN);
+                            assert_eq!(header.r#type, *r#type);
+                            assert_eq!(header.date, NaiveDate::from_ymd(2022, 4, 1));
+
+                            assert_eq!(header.ipv4_index_info.index_start, 65);
+                            assert_eq!(
+                                header.ipv6_index_info.index_start,
+                                header.ipv4_index_info.index_end()
+                            );
+                            assert_eq!(
+                                header.ipv4_data_info.index_start,
+                                header.ipv6_index_info.index_end()
+                            );
+                            assert_eq!(
+                                header.ipv6_data_info.index_start,
+                                header.ipv4_data_info.index_end(header.num_fields)
+                            );
+                            // assert_eq!(
+                            //     header.ipv6_data_info.index_end(header.num_fields),
+                            //     header.size
+                            // );
+
+                            println!("parser:{:?}", parser);
+                        }
+                        x => {
+                            panic!("path:{}, ret:{:?} parser:{:?}", path, x, parser)
+                        }
+                    }
+                }
                 Err(err) if err.kind() == IoErrorKind::NotFound => {
-                    eprintln!("path: {}, err: {:?}", path, err);
-                    return Ok(());
+                    eprintln!("path:{}, err:{:?}", path, err);
                 }
-                Err(err) => return Err(err.into()),
+                Err(err) => panic!("path:{}, err:{:?}", path, err),
             };
-            let mut buf = vec![0; 70];
-            f.read_exact(&mut buf)?;
-
-            println!("buf: {:?}", buf);
-
-            //
-            let mut parser = Parser::new();
-            match parser.parse(&mut Cursor::new(buf))? {
-                ControlFlow::Break((n_parsed, header)) => {
-                    assert_eq!(n_parsed, LEN);
-                    assert_eq!(header.r#type, *r#type);
-                    assert_eq!(header.date, NaiveDate::from_ymd(2022, 4, 1));
-
-                    assert_eq!(header.ipv4_index_info.index_start, 65);
-                    assert_eq!(
-                        header.ipv6_index_info.index_start,
-                        header.ipv4_index_info.index_end()
-                    );
-                    assert_eq!(
-                        header.ipv4_data_info.index_start,
-                        header.ipv6_index_info.index_end()
-                    );
-                    assert_eq!(
-                        header.ipv6_data_info.index_start,
-                        header.ipv4_data_info.index_end(header.num_fields)
-                    );
-                    // assert_eq!(
-                    //     header.ipv6_data_info.index_end(header.num_fields),
-                    //     header.size
-                    // );
-
-                    println!("parser: {:?}", parser);
-                }
-                x => {
-                    println!("parser: {:?}", parser);
-                    panic!("{:?}", x)
-                }
-            }
         }
 
         Ok(())

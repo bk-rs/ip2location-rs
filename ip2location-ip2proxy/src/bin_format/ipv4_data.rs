@@ -10,6 +10,7 @@ use crate::{
         database::LookupError,
         header::{Header, Type},
         ipv4_index::Ipv4Index,
+        record::parse as record_parse,
     },
     record::Record,
 };
@@ -32,7 +33,8 @@ impl Ipv4Data {
             info: header.ipv4_data_info,
             r#type: header.r#type,
             buf: {
-                let len = (header.num_fields as usize * 4) + 4;
+                // 4 = ip_to(Ipv4Addr) size
+                let len = Ipv4Data::len(1, header.num_fields) as usize + 4;
                 let mut buf = Vec::with_capacity(len);
                 buf.resize_with(len, Default::default);
                 buf
@@ -45,11 +47,10 @@ impl Ipv4Data {
         n * (num_fields as u32) * 4
     }
 
-    pub async fn lookup(&mut self, addr: Ipv4Addr) -> Result<Option<Record>, LookupError> {
+    pub async fn lookup(&mut self, ip: Ipv4Addr) -> Result<Option<Record>, LookupError> {
         // https://github.com/ip2location/ip2proxy-rust/blob/5bdd3ef61c2e243c1b61eda1475ca23eab2b7240/src/db.rs#L194-L210
 
-        let ip = u32::from(addr);
-        let (mut low, mut high) = self.index.low_and_high(addr);
+        let (mut low, mut high) = self.index.low_and_high(ip);
 
         let fields = self.r#type.fields();
         let num_fields = fields.len();
@@ -69,20 +70,22 @@ impl Ipv4Data {
                 .await
                 .map_err(LookupError::FileReadFailed)?;
 
-            let ip_from = u32::from_ne_bytes(self.buf[0..4].try_into().unwrap());
-            let ip_to = u32::from_ne_bytes(
+            let ip_from = Ipv4Addr::from(u32::from_ne_bytes(self.buf[0..4].try_into().unwrap()));
+            let ip_to = Ipv4Addr::from(u32::from_ne_bytes(
                 self.buf[self.buf.len() - 4..self.buf.len()]
                     .try_into()
                     .unwrap(),
-            );
+            ));
 
             #[allow(clippy::collapsible_else_if)]
             if (ip >= ip_from) && (ip < ip_to) {
-                let record = parse_record(
-                    Ipv4Addr::from(ip_from),
-                    Ipv4Addr::from(ip_to),
+                let record = record_parse(
+                    ip_from.into(),
+                    ip_to.into(),
                     &self.buf[4..self.buf.len() - 4],
-                )?;
+                    &fields[1..],
+                )
+                .map_err(LookupError::RecordParseFailed)?;
 
                 return Ok(Some(record));
             } else {
@@ -96,12 +99,6 @@ impl Ipv4Data {
 
         Ok(None)
     }
-}
-
-fn parse_record(ip_from: Ipv4Addr, ip_to: Ipv4Addr, slice: &[u8]) -> Result<Record, LookupError> {
-    let record = Record::with_empty(ip_from.into(), ip_to.into());
-
-    Ok(record)
 }
 
 //

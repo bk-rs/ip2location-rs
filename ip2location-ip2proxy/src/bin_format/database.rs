@@ -19,6 +19,7 @@ use crate::{
         ipv4_index::{BuildError as Ipv4IndexBuildError, Ipv4Index},
         ipv6_data::Ipv6Data,
         ipv6_index::{BuildError as Ipv6IndexBuildError, Ipv6Index},
+        record::ParseError as RecordParseError,
     },
     record::Record,
 };
@@ -212,6 +213,7 @@ impl std::error::Error for FromFileError {}
 pub enum LookupError {
     FileSeekFailed(IoError),
     FileReadFailed(IoError),
+    RecordParseFailed(RecordParseError),
 }
 
 impl fmt::Display for LookupError {
@@ -226,22 +228,31 @@ impl std::error::Error for LookupError {}
 mod tests {
     use super::*;
 
-    use std::{error, path::Path};
+    use std::{error, io::ErrorKind as IoErrorKind};
 
-    use crate::bin_format::{TEST_BIN_FILES, TEST_BIN_IPV4_ADDRS};
+    use crate::bin_format::{
+        TEST_20220401_BIN_FILES, TEST_20220401_BIN_IPV4_ADDRS, TEST_20220401_BIN_IPV6_ADDRS,
+    };
 
     #[tokio::test]
-    async fn test_from_file_20220401() -> Result<(), Box<dyn error::Error>> {
-        for (path, _) in TEST_BIN_FILES {
-            if !Path::new(path).exists() {
-                return Ok(());
-            }
+    async fn test_lookup_20220401() -> Result<(), Box<dyn error::Error>> {
+        for (path, _) in TEST_20220401_BIN_FILES {
+            match Database::from_file(path).await {
+                Ok(mut db) => {
+                    for addr in TEST_20220401_BIN_IPV4_ADDRS {
+                        let record = db.ipv4_lookup(Ipv4Addr::from(*addr)).await?;
+                        assert!(record.is_some());
+                    }
 
-            let mut db = Database::from_file(path).await?;
-
-            for addr in TEST_BIN_IPV4_ADDRS {
-                let record = db.ipv4_lookup(addr.parse()?).await?;
-                println!("record: {:?}", record);
+                    for addr in TEST_20220401_BIN_IPV6_ADDRS {
+                        let record = db.ipv6_lookup(Ipv6Addr::from(*addr)).await?;
+                        assert!(record.is_some());
+                    }
+                }
+                Err(FromFileError::FileOpenFailed(err)) if err.kind() == IoErrorKind::NotFound => {
+                    eprintln!("path:{}, err:{:?}", path, err);
+                }
+                Err(err) => panic!("path:{}, err:{:?}", path, err),
             }
         }
 
