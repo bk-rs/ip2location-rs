@@ -25,3 +25,25 @@ pub struct Record {
     pub threat: Option<Box<str>>,
     pub provider: Option<Box<str>>,
 }
+
+impl Record {
+    pub(crate) fn with_empty(ip_from: IpAddr, ip_to: IpAddr) -> Self {
+        Self {
+            ip_from,
+            ip_to,
+            proxy_type: Default::default(),
+            country_code: Default::default(),
+            country_name: Default::default(),
+            region_name: Default::default(),
+            city_name: Default::default(),
+            isp: Default::default(),
+            domain: Default::default(),
+            usage_type: Default::default(),
+            asn: Default::default(),
+            r#as: Default::default(),
+            last_seen: Default::default(),
+            threat: Default::default(),
+            provider: Default::default(),
+        }
+    }
+}

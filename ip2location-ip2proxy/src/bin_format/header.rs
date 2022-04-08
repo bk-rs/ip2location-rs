@@ -3,10 +3,14 @@ use std::io::{BufRead, Error as IoError, Read as _};
 
 use chrono::{Datelike, NaiveDate};
 
-use crate::bin_format::{field::Field, ipv4_index::Ipv4Index, ipv6_index::Ipv6Index};
+use crate::bin_format::{
+    field::Field, ipv4_data::Ipv4DataInfo, ipv4_index::Ipv4IndexInfo, ipv6_data::Ipv6DataInfo,
+    ipv6_index::Ipv6IndexInfo,
+};
 
 //
 pub const LEN: usize = 5 + 6 * 4 + 2 + 4;
+pub const MAX_LEN: usize = 64;
 
 //
 #[non_exhaustive]
@@ -17,13 +21,13 @@ pub struct Header {
     // 2-13
     pub num_fields: u8,
     pub date: NaiveDate,
-    pub ipv4_data_info: IpDataInfo,
-    pub ipv6_data_info: IpDataInfo,
-    pub ipv4_index_info: IpIndexInfo,
-    pub ipv6_index_info: IpIndexInfo,
+    pub ipv4_data_info: Ipv4DataInfo,
+    pub ipv6_data_info: Ipv6DataInfo,
+    pub ipv4_index_info: Ipv4IndexInfo,
+    pub ipv6_index_info: Ipv6IndexInfo,
     pub product_code: u8,
     pub license_code: u8,
-    pub size: u32,
+    pub total_size: u32,
 }
 
 impl Default for Header {
@@ -38,7 +42,7 @@ impl Default for Header {
             ipv6_index_info: Default::default(),
             product_code: Default::default(),
             license_code: Default::default(),
-            size: Default::default(),
+            total_size: Default::default(),
         }
     }
 }
@@ -94,52 +98,6 @@ impl Type {
 }
 
 //
-#[derive(Debug, Clone, Copy, Default)]
-pub struct IpDataInfo {
-    // >= 0
-    pub count: u32,
-    // > 0
-    pub index_start: u32,
-}
-
-impl IpDataInfo {
-    pub fn ipv4_data_size(&self, num_fields: u8) -> u32 {
-        // https://github.com/ip2location/ip2proxy-rust/blob/5bdd3ef61c2e243c1b61eda1475ca23eab2b7240/src/db.rs#L201
-        self.count * (num_fields as u32) * 4
-    }
-
-    pub fn ipv4_index_end(&self, num_fields: u8) -> u32 {
-        self.index_start + self.ipv4_data_size(num_fields)
-    }
-
-    pub fn ipv6_data_size(&self, num_fields: u8) -> u32 {
-        // https://github.com/ip2location/ip2proxy-rust/blob/5bdd3ef61c2e243c1b61eda1475ca23eab2b7240/src/db.rs#L231
-        self.count * ((num_fields as u32) * 4 + 12)
-    }
-
-    pub fn ipv6_index_end(&self, num_fields: u8) -> u32 {
-        self.index_start + self.ipv6_data_size(num_fields)
-    }
-}
-
-//
-#[derive(Debug, Clone, Copy, Default)]
-pub struct IpIndexInfo {
-    // > 0
-    pub index_start: u32,
-}
-
-impl IpIndexInfo {
-    pub fn ipv4_index_end(&self) -> u32 {
-        self.index_start + Ipv4Index::len()
-    }
-
-    pub fn ipv6_index_end(&self) -> u32 {
-        self.index_start + Ipv6Index::len()
-    }
-}
-
-//
 //
 //
 #[derive(Debug, Default)]
@@ -163,7 +121,7 @@ enum ParserState {
     Ipv6IndexInfoIndexStartParsed,
     ProductCodeParsed,
     LicenseCodeParsed,
-    SizeParsed,
+    TotalSizeParsed,
 }
 
 impl Default for ParserState {
@@ -387,7 +345,7 @@ impl Parser {
             }
         }
 
-        if self.state < ParserState::SizeParsed {
+        if self.state < ParserState::TotalSizeParsed {
             take.set_limit(4);
 
             let n = take.read(&mut self.buf[..])?;
@@ -396,8 +354,8 @@ impl Parser {
                 4 => {
                     let size = u32::from_ne_bytes(self.buf);
 
-                    self.state = ParserState::SizeParsed;
-                    self.header.size = size;
+                    self.state = ParserState::TotalSizeParsed;
+                    self.header.total_size = size;
                     n_parsed += n;
                 }
                 _ => unreachable!(),
@@ -419,29 +377,21 @@ impl Parser {
             return Err(ParseError::Ipv4IndexInfoIndexStartTooSmall);
         }
 
-        if self.header.ipv6_index_info.index_start < self.header.ipv4_index_info.ipv4_index_end() {
+        if self.header.ipv6_index_info.index_start < self.header.ipv4_index_info.index_end() {
             return Err(ParseError::Ipv6IndexInfoIndexStartTooSmall);
         }
 
-        if self.header.ipv4_data_info.index_start < self.header.ipv6_index_info.ipv6_index_end() {
+        if self.header.ipv4_data_info.index_start < self.header.ipv6_index_info.index_end() {
             return Err(ParseError::Ipv4DataInfoIndexStartTooSmall);
         }
 
         if self.header.ipv6_data_info.index_start
-            < self
-                .header
-                .ipv4_data_info
-                .ipv4_index_end(self.header.num_fields)
+            < self.header.ipv4_data_info.index_end(self.header.num_fields)
         {
             return Err(ParseError::Ipv6DataInfoIndexStartTooSmall);
         }
 
-        if self
-            .header
-            .ipv6_data_info
-            .ipv4_index_end(self.header.num_fields)
-            > self.header.size
-        {
+        if self.header.ipv6_data_info.index_end(self.header.num_fields) > self.header.total_size {
             return Err(ParseError::Ipv6DataInfoIndexStartTooLarge);
         }
 
@@ -492,12 +442,11 @@ mod tests {
         io::{Cursor, ErrorKind as IoErrorKind},
     };
 
+    use crate::bin_format::TEST_BIN_FILES;
+
     #[test]
     fn test_parse_20220401() -> Result<(), Box<dyn error::Error>> {
-        for (path, r#type) in &[
-            ("data/20220401/IP2PROXY-LITE-PX1.BIN", Type::PX1),
-            ("data/20220401/IP2PROXY-LITE-PX11.BIN", Type::PX11),
-        ] {
+        for (path, r#type) in TEST_BIN_FILES {
             let mut f = match File::open(path) {
                 Ok(x) => x,
                 Err(err) if err.kind() == IoErrorKind::NotFound => {
@@ -522,18 +471,18 @@ mod tests {
                     assert_eq!(header.ipv4_index_info.index_start, 65);
                     assert_eq!(
                         header.ipv6_index_info.index_start,
-                        header.ipv4_index_info.ipv4_index_end()
+                        header.ipv4_index_info.index_end()
                     );
                     assert_eq!(
                         header.ipv4_data_info.index_start,
-                        header.ipv6_index_info.ipv6_index_end()
+                        header.ipv6_index_info.index_end()
                     );
                     assert_eq!(
                         header.ipv6_data_info.index_start,
-                        header.ipv4_data_info.ipv4_index_end(header.num_fields)
+                        header.ipv4_data_info.index_end(header.num_fields)
                     );
                     // assert_eq!(
-                    //     header.ipv6_data_info.ipv6_index_end(header.num_fields),
+                    //     header.ipv6_data_info.index_end(header.num_fields),
                     //     header.size
                     // );
 
@@ -547,16 +496,5 @@ mod tests {
         }
 
         Ok(())
-    }
-
-    #[test]
-    fn test_ip_index_info() {
-        let ipv4_info = IpIndexInfo { index_start: 65 };
-        assert_eq!(ipv4_info.ipv4_index_end(), 524353);
-
-        let ipv6_info = IpIndexInfo {
-            index_start: 524353,
-        };
-        assert_eq!(ipv6_info.ipv6_index_end(), 1048641);
     }
 }

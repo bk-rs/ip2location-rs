@@ -47,6 +47,22 @@ impl Ipv6Index {
 //
 //
 //
+#[non_exhaustive]
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Ipv6IndexInfo {
+    // > 0
+    pub index_start: u32,
+}
+
+impl Ipv6IndexInfo {
+    pub fn index_end(&self) -> u32 {
+        self.index_start + Ipv6Index::len()
+    }
+}
+
+//
+//
+//
 pub struct Builder {
     bytes: Vec<u8>,
 }
@@ -105,5 +121,13 @@ mod tests {
         );
 
         assert_eq!(Ipv6Index::len(), 524288);
+    }
+
+    #[test]
+    fn test_info() {
+        let info = Ipv6IndexInfo {
+            index_start: 524353,
+        };
+        assert_eq!(info.index_end(), 1048641);
     }
 }

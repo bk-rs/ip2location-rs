@@ -1,6 +1,7 @@
 use core::{fmt, ops::ControlFlow};
 use std::{
     io::{Cursor, Error as IoError, SeekFrom},
+    net::{Ipv4Addr, Ipv6Addr},
     path::Path,
 };
 
@@ -8,18 +9,24 @@ use async_fs::File as AsyncFsFile;
 use futures_util::{AsyncReadExt as _, AsyncSeekExt as _};
 use tokio::fs::File as TokioFile;
 
-use crate::bin_format::{
-    header::{Header, ParseError as HeaderParseError, Parser as HeaderParser},
-    ipv4_data::Ipv4Data,
-    ipv4_index::{BuildError as Ipv4IndexBuildError, Ipv4Index},
-    ipv6_data::Ipv6Data,
+use crate::{
+    bin_format::{
+        header::{
+            Header, ParseError as HeaderParseError, Parser as HeaderParser,
+            MAX_LEN as HEADER_MAX_LEN,
+        },
+        ipv4_data::Ipv4Data,
+        ipv4_index::{BuildError as Ipv4IndexBuildError, Ipv4Index},
+        ipv6_data::Ipv6Data,
+        ipv6_index::{BuildError as Ipv6IndexBuildError, Ipv6Index},
+    },
+    record::Record,
 };
 
 //
 #[derive(Debug)]
 pub struct Database {
-    header: Header,
-    ipv4_index: Ipv4Index,
+    pub header: Header,
     storage: Storage,
 }
 
@@ -36,62 +43,112 @@ impl Database {
         let mut buf = vec![0; 1024 * 8];
 
         //
-        let mut parser = HeaderParser::new();
-        let mut n_read = 0;
-        let mut n_parsed = 0;
-        let header = loop {
-            let n = file
-                .read(&mut buf[n_parsed..1024])
-                .await
-                .map_err(FromFileError::FileReadFailed)?;
+        let header = {
+            let mut parser = HeaderParser::new();
+            let mut n_read = 0;
+            let mut n_parsed = 0;
+            loop {
+                let n = file
+                    .read(&mut buf[n_read..n_read + HEADER_MAX_LEN])
+                    .await
+                    .map_err(FromFileError::FileReadFailed)?;
 
-            if n == 0 {
-                return Err(FromFileError::Other("header parsing is not completed"));
-            }
-
-            n_read += n;
-
-            match parser
-                .parse(&mut Cursor::new(&buf[n_parsed..n_read]))
-                .map_err(FromFileError::HeaderParseFailed)?
-            {
-                ControlFlow::Continue(n) => {
-                    n_parsed += n;
-                    continue;
+                if n == 0 {
+                    return Err(FromFileError::Other("header parsing is not completed"));
                 }
-                ControlFlow::Break((_n, header)) => {
-                    break header;
+
+                n_read += n;
+
+                match parser
+                    .parse(&mut Cursor::new(&buf[n_parsed..n_read]))
+                    .map_err(FromFileError::HeaderParseFailed)?
+                {
+                    ControlFlow::Continue(n) => {
+                        n_parsed += n;
+                        continue;
+                    }
+                    ControlFlow::Break((_n, header)) => {
+                        break header;
+                    }
+                }
+            }
+        };
+
+        if header.total_size as u64
+            != file
+                .metadata()
+                .await
+                .map_err(FromFileError::FileReadMetadataFailed)?
+                .len()
+        {
+            return Err(FromFileError::Other("file size mismatch"));
+        }
+
+        //
+        let ipv4_index = {
+            let mut ipv4_index_builder = Ipv4Index::builder();
+            let mut n_max_appended = Ipv4Index::len() as usize;
+            file.seek(SeekFrom::Start(
+                header.ipv4_index_info.index_start as u64 - 1,
+            ))
+            .await
+            .map_err(FromFileError::FileReadFailed)?;
+            loop {
+                let n = file
+                    .read(&mut buf[..])
+                    .await
+                    .map_err(FromFileError::FileReadFailed)?;
+
+                if n == 0 {
+                    return Err(FromFileError::Other("ipv4_index building is not completed"));
+                }
+
+                if n < n_max_appended {
+                    ipv4_index_builder.append(&buf[..n]);
+
+                    n_max_appended -= n;
+                    continue;
+                } else {
+                    ipv4_index_builder.append(&buf[..n_max_appended]);
+
+                    break ipv4_index_builder
+                        .finish()
+                        .map_err(FromFileError::Ipv4IndexBuildFailed)?;
                 }
             }
         };
 
         //
-        let mut ipv4_index_builder = Ipv4Index::builder();
-        let mut n_max_appended = Ipv4Index::len() as usize;
-        file.seek(SeekFrom::Start(header.ipv4_index_info.index_start as u64))
+        let ipv6_index = {
+            let mut ipv6_index_builder = Ipv6Index::builder();
+            let mut n_max_appended = Ipv6Index::len() as usize;
+            file.seek(SeekFrom::Start(
+                header.ipv6_index_info.index_start as u64 - 1,
+            ))
             .await
             .map_err(FromFileError::FileReadFailed)?;
-        let ipv4_index = loop {
-            let n = file
-                .read(&mut buf[..])
-                .await
-                .map_err(FromFileError::FileReadFailed)?;
+            loop {
+                let n = file
+                    .read(&mut buf[..])
+                    .await
+                    .map_err(FromFileError::FileReadFailed)?;
 
-            if n == 0 {
-                return Err(FromFileError::Other("ipv4_index building is not completed"));
-            }
+                if n == 0 {
+                    return Err(FromFileError::Other("ipv6_index building is not completed"));
+                }
 
-            if n < n_max_appended {
-                ipv4_index_builder.append(&buf[..n]);
+                if n < n_max_appended {
+                    ipv6_index_builder.append(&buf[..n]);
 
-                n_max_appended -= n;
-                continue;
-            } else {
-                ipv4_index_builder.append(&buf[..n_max_appended]);
+                    n_max_appended -= n;
+                    continue;
+                } else {
+                    ipv6_index_builder.append(&buf[..n_max_appended]);
 
-                break ipv4_index_builder
-                    .finish()
-                    .map_err(FromFileError::Ipv4IndexBuildFailed)?;
+                    break ipv6_index_builder
+                        .finish()
+                        .map_err(FromFileError::Ipv6IndexBuildFailed)?;
+                }
             }
         };
 
@@ -100,21 +157,33 @@ impl Database {
             TokioFile::open(path.as_ref())
                 .await
                 .map_err(FromFileError::FileOpenFailed)?,
+            ipv4_index,
+            header,
         );
 
         let ipv6_data = Ipv6Data::new(
             TokioFile::open(path)
                 .await
                 .map_err(FromFileError::FileOpenFailed)?,
+            ipv6_index,
+            header,
         );
 
         let storage = Storage::Single(ipv4_data, ipv6_data);
 
-        Ok(Self {
-            header,
-            ipv4_index,
-            storage,
-        })
+        Ok(Self { header, storage })
+    }
+
+    pub async fn ipv4_lookup(&mut self, addr: Ipv4Addr) -> Result<Option<Record>, LookupError> {
+        match &mut self.storage {
+            Storage::Single(ipv4_data, _) => ipv4_data.lookup(addr).await,
+        }
+    }
+
+    pub async fn ipv6_lookup(&mut self, addr: Ipv6Addr) -> Result<Option<Record>, LookupError> {
+        match &mut self.storage {
+            Storage::Single(_, ipv6_data) => ipv6_data.lookup(addr).await,
+        }
     }
 }
 
@@ -123,8 +192,10 @@ impl Database {
 pub enum FromFileError {
     FileOpenFailed(IoError),
     FileReadFailed(IoError),
+    FileReadMetadataFailed(IoError),
     HeaderParseFailed(HeaderParseError),
     Ipv4IndexBuildFailed(Ipv4IndexBuildError),
+    Ipv6IndexBuildFailed(Ipv6IndexBuildError),
     Other(&'static str),
 }
 
@@ -136,19 +207,43 @@ impl fmt::Display for FromFileError {
 
 impl std::error::Error for FromFileError {}
 
+//
+#[derive(Debug)]
+pub enum LookupError {
+    FileSeekFailed(IoError),
+    FileReadFailed(IoError),
+}
+
+impl fmt::Display for LookupError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl std::error::Error for LookupError {}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    use std::error;
+    use std::{error, path::Path};
+
+    use crate::bin_format::{TEST_BIN_FILES, TEST_BIN_IPV4_ADDRS};
 
     #[tokio::test]
     async fn test_from_file_20220401() -> Result<(), Box<dyn error::Error>> {
-        let path = "data/20220401/IP2PROXY-LITE-PX1.BIN";
+        for (path, _) in TEST_BIN_FILES {
+            if !Path::new(path).exists() {
+                return Ok(());
+            }
 
-        let db = Database::from_file(path).await?;
+            let mut db = Database::from_file(path).await?;
 
-        println!("db: {:?}", db);
+            for addr in TEST_BIN_IPV4_ADDRS {
+                let record = db.ipv4_lookup(addr.parse()?).await?;
+                println!("record: {:?}", record);
+            }
+        }
 
         Ok(())
     }
