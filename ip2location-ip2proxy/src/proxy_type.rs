@@ -13,6 +13,8 @@ pub enum ProxyType {
     WEB,
     SES,
     RES,
+    #[serde(rename = "-")]
+    Unknown,
     #[serde(other)]
     Other(Box<str>),
 }

@@ -44,99 +44,133 @@ impl FieldData {
             self.fields
         );
 
-        let mut field_contents: Vec<(Field, Box<str>)> = vec![];
+        let mut record = Record::with_empty(ip_from, ip_to);
 
         for (field, index) in indexes {
             // https://github.com/ip2location/ip2proxy-rust/blob/5bdd3ef61c2e243c1b61eda1475ca23eab2b7240/src/db.rs#L416
+
             self.file
                 .seek(SeekFrom::Start(index as u64))
                 .await
                 .map_err(LookupError::FileSeekFailed)?;
 
+            //
             let mut n_read = 0;
+
+            //
             let n = self
                 .file
                 .read(&mut self.buf[..64])
                 .await
                 .map_err(LookupError::FileReadFailed)?;
             n_read += n;
-
             if n == 0 {
                 return Err(LookupError::Other("read is not completed"));
             }
 
-            let len = self.buf[0];
-
+            //
+            let mut n_loop = 0;
             loop {
-                #[allow(clippy::int_plus_one)]
-                if (len as usize) <= n_read - 1 {
-                    break;
+                loop {
+                    if !self.buf.is_empty() {
+                        let len = self.buf[0];
+
+                        #[allow(clippy::int_plus_one)]
+                        if (len as usize) <= n_read - 1 {
+                            break;
+                        }
+                    }
+
+                    let n = self
+                        .file
+                        .read(&mut self.buf[n_read..])
+                        .await
+                        .map_err(LookupError::FileReadFailed)?;
+                    n_read += n;
+
+                    if n == 0 {
+                        return Err(LookupError::Other("read is not completed 2"));
+                    }
                 }
 
-                let n = self
-                    .file
-                    .read(&mut self.buf[n_read..])
-                    .await
-                    .map_err(LookupError::FileReadFailed)?;
-                n_read += n;
+                let len = self.buf[0];
+                let value = str::from_utf8(&self.buf[1..1 + len as usize]).unwrap();
 
-                if n == 0 {
-                    return Err(LookupError::Other("read is not completed 2"));
-                }
-            }
+                match field {
+                    Field::IP => {
+                        unreachable!()
+                    }
+                    Field::COUNTRY => {
+                        match n_loop {
+                            0 => {
+                                // values: "-"
+                                record.country_code = value.parse().unwrap();
 
-            field_contents.push((
-                field,
-                str::from_utf8(&self.buf[1..1 + len as usize])
-                    .unwrap()
-                    .into(),
-            ));
+                                n_loop += 1;
+                                // https://github.com/ip2location/ip2proxy-rust/blob/5bdd3ef61c2e243c1b61eda1475ca23eab2b7240/src/db.rs#L252
+                                // Not 1 + len
+                                self.buf.rotate_left(3);
 
-            // TODO, https://github.com/ip2location/ip2proxy-rust/blob/5bdd3ef61c2e243c1b61eda1475ca23eab2b7240/src/db.rs#L252
-            // maybe indexes require Field
-        }
+                                continue;
+                            }
+                            1 => {
+                                record.country_name = Some(value.parse().unwrap());
 
-        let mut record = Record::with_empty(ip_from, ip_to);
+                                break;
+                            }
+                            _ => unreachable!(),
+                        }
+                    }
+                    Field::PROXYTYPE => {
+                        record.proxy_type = Some(value.parse().unwrap());
+                        break;
+                    }
+                    Field::REGION => {
+                        record.region_name = Some(value.parse().unwrap());
+                        break;
+                    }
+                    Field::CITY => {
+                        record.city_name = Some(value.parse().unwrap());
+                        break;
+                    }
+                    Field::ISP => {
+                        record.isp = Some(value.parse().unwrap());
+                        break;
+                    }
+                    Field::DOMAIN => {
+                        record.domain = Some(value.parse().unwrap());
+                        break;
+                    }
+                    Field::USAGETYPE => {
+                        record.usage_type = Some(value.parse().unwrap());
+                        break;
+                    }
+                    Field::ASN => {
+                        record.asn = Some(value.parse().unwrap());
 
-        for (field, value) in field_contents {
-            match field {
-                Field::IP => {}
-                Field::COUNTRY => {
-                    // values: "-"
-                    record.country_code = value;
-                }
-                Field::PROXYTYPE => {
-                    record.proxy_type = Some(value.parse().unwrap());
-                }
-                Field::REGION => {
-                    // TODO,
-                }
-                Field::CITY => {
-                    // TODO,
-                }
-                Field::ISP => {
-                    // TODO,
-                }
-                Field::DOMAIN => {
-                    // TODO,
-                }
-                Field::USAGETYPE => {
-                    // TODO,
-                }
-                Field::ASN => {
-                    // TODO,
-                }
-                Field::LASTSEEN => {
-                    // TODO,
-                }
-                Field::THREAT => {
-                    // TODO,
-                }
-                Field::RESIDENTIAL => {
-                    // TODO,
-                }
-                Field::PROVIDER => {
-                    // TODO,
+                        break;
+                    }
+                    Field::AS => {
+                        record.as_name = Some(value.parse().unwrap());
+                        break;
+                    }
+                    Field::LASTSEEN => {
+                        record.last_seen = Some(value.parse().unwrap());
+
+                        break;
+                    }
+                    Field::THREAT => {
+                        record.threat = Some(value.parse().unwrap());
+                        break;
+                    }
+                    Field::PROVIDER => {
+                        record.provider = Some(value.parse().unwrap());
+                        break;
+                    }
+                    Field::RESIDENTIAL => {
+                        // TODO,
+                        break;
+                    }
                 }
             }
         }

@@ -18,6 +18,8 @@ pub enum UsageType {
     DCH,
     SES,
     RSV,
+    #[serde(rename = "-")]
+    Unknown,
     #[serde(other)]
     Other(Box<str>),
 }

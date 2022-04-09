@@ -14,10 +14,11 @@ pub enum Field {
     DOMAIN,
     USAGETYPE,
     ASN,
+    AS,
     LASTSEEN,
     THREAT,
-    RESIDENTIAL,
     PROVIDER,
+    RESIDENTIAL,
 }
 
 impl Field {
@@ -69,6 +70,7 @@ impl Field {
                 Field::DOMAIN,
                 Field::USAGETYPE,
                 Field::ASN,
+                Field::AS,
             ],
             Type::PX8 => vec![
                 Field::IP,
@@ -80,6 +82,7 @@ impl Field {
                 Field::DOMAIN,
                 Field::USAGETYPE,
                 Field::ASN,
+                Field::AS,
                 Field::LASTSEEN,
             ],
             Type::PX9 => vec![
@@ -92,6 +95,7 @@ impl Field {
                 Field::DOMAIN,
                 Field::USAGETYPE,
                 Field::ASN,
+                Field::AS,
                 Field::LASTSEEN,
                 Field::THREAT,
             ],
@@ -105,9 +109,9 @@ impl Field {
                 Field::DOMAIN,
                 Field::USAGETYPE,
                 Field::ASN,
+                Field::AS,
                 Field::LASTSEEN,
                 Field::THREAT,
-                Field::RESIDENTIAL,
             ],
             Type::PX11 => vec![
                 Field::IP,
@@ -119,9 +123,9 @@ impl Field {
                 Field::DOMAIN,
                 Field::USAGETYPE,
                 Field::ASN,
+                Field::AS,
                 Field::LASTSEEN,
                 Field::THREAT,
-                Field::RESIDENTIAL,
                 Field::PROVIDER,
             ],
         }

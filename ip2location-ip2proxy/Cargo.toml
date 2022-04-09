@@ -15,6 +15,7 @@ readme = "README.md"
 [dependencies]
 serde = { version = "1.0", default_features = false, features = ["std", "derive"] }
 serde-enum-str = { version = "0.2", default-features = false }
+serde-field-with = { version = "0.1.2", default-features = false, features = ["std"] }
 chrono = { version = "0.4", default-features = false }
 async-fs = { version = "1.5", default-features = false }
 futures-util = { version = "0.3", default-features = false, features = ["std", "io"] }
