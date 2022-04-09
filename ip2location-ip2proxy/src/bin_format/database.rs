@@ -1,7 +1,7 @@
 use core::{fmt, ops::ControlFlow};
 use std::{
     io::{Cursor, Error as IoError, SeekFrom},
-    net::{Ipv4Addr, Ipv6Addr},
+    net::{IpAddr, Ipv4Addr, Ipv6Addr},
     path::Path,
 };
 
@@ -11,6 +11,7 @@ use tokio::fs::File as TokioFile;
 
 use crate::{
     bin_format::{
+        field_data::FieldData,
         header::{
             Header, ParseError as HeaderParseError, Parser as HeaderParser,
             MAX_LEN as HEADER_MAX_LEN,
@@ -19,7 +20,6 @@ use crate::{
         ipv4_index::{BuildError as Ipv4IndexBuildError, Ipv4Index},
         ipv6_data::Ipv6Data,
         ipv6_index::{BuildError as Ipv6IndexBuildError, Ipv6Index},
-        record::ParseError as RecordParseError,
     },
     record::Record,
 };
@@ -28,7 +28,10 @@ use crate::{
 #[derive(Debug)]
 pub struct Database {
     pub header: Header,
+    ipv4_index: Ipv4Index,
+    ipv6_index: Ipv6Index,
     storage: Storage,
+    field_data: FieldData,
 }
 
 #[derive(Debug)]
@@ -158,33 +161,75 @@ impl Database {
             TokioFile::open(path.as_ref())
                 .await
                 .map_err(FromFileError::FileOpenFailed)?,
-            ipv4_index,
             header,
         );
 
         let ipv6_data = Ipv6Data::new(
-            TokioFile::open(path)
+            TokioFile::open(path.as_ref())
                 .await
                 .map_err(FromFileError::FileOpenFailed)?,
-            ipv6_index,
             header,
         );
 
         let storage = Storage::Single(ipv4_data, ipv6_data);
 
-        Ok(Self { header, storage })
+        let field_data = FieldData::new(
+            TokioFile::open(path.as_ref())
+                .await
+                .map_err(FromFileError::FileOpenFailed)?,
+            header,
+        );
+
+        Ok(Self {
+            header,
+            ipv4_index,
+            ipv6_index,
+            storage,
+            field_data,
+        })
     }
 
-    pub async fn ipv4_lookup(&mut self, addr: Ipv4Addr) -> Result<Option<Record>, LookupError> {
-        match &mut self.storage {
-            Storage::Single(ipv4_data, _) => ipv4_data.lookup(addr).await,
+    pub async fn lookup(&mut self, ip: IpAddr) -> Result<Option<Record>, LookupError> {
+        match ip {
+            IpAddr::V4(ip) => self.lookup_ipv4(ip).await,
+            IpAddr::V6(ip) => self.lookup_ipv6(ip).await,
         }
     }
 
-    pub async fn ipv6_lookup(&mut self, addr: Ipv6Addr) -> Result<Option<Record>, LookupError> {
-        match &mut self.storage {
-            Storage::Single(_, ipv6_data) => ipv6_data.lookup(addr).await,
-        }
+    pub async fn lookup_ipv4(&mut self, ip: Ipv4Addr) -> Result<Option<Record>, LookupError> {
+        let output = match &mut self.storage {
+            Storage::Single(ipv4_data, _) => ipv4_data.lookup(ip, &self.ipv4_index).await?,
+        };
+
+        let (ip_from, ip_to, indexes) = match output {
+            Some(x) => x,
+            None => return Ok(None),
+        };
+
+        let record = self
+            .field_data
+            .make(ip_from.into(), ip_to.into(), indexes)
+            .await?;
+
+        Ok(Some(record))
+    }
+
+    pub async fn lookup_ipv6(&mut self, ip: Ipv6Addr) -> Result<Option<Record>, LookupError> {
+        let output = match &mut self.storage {
+            Storage::Single(_, ipv6_data) => ipv6_data.lookup(ip, &self.ipv6_index).await?,
+        };
+
+        let (ip_from, ip_to, indexes) = match output {
+            Some(x) => x,
+            None => return Ok(None),
+        };
+
+        let record = self
+            .field_data
+            .make(ip_from.into(), ip_to.into(), indexes)
+            .await?;
+
+        Ok(Some(record))
     }
 }
 
@@ -213,7 +258,7 @@ impl std::error::Error for FromFileError {}
 pub enum LookupError {
     FileSeekFailed(IoError),
     FileReadFailed(IoError),
-    RecordParseFailed(RecordParseError),
+    Other(&'static str),
 }
 
 impl fmt::Display for LookupError {
@@ -231,21 +276,24 @@ mod tests {
     use std::{error, io::ErrorKind as IoErrorKind};
 
     use crate::bin_format::{
-        TEST_20220401_BIN_FILES, TEST_20220401_BIN_IPV4_ADDRS, TEST_20220401_BIN_IPV6_ADDRS,
+        TEST_LITE_20220401_BIN_FILES, TEST_LITE_20220401_BIN_IPV4_ADDRS,
+        TEST_LITE_20220401_BIN_IPV6_ADDRS,
     };
 
     #[tokio::test]
     async fn test_lookup_20220401() -> Result<(), Box<dyn error::Error>> {
-        for (path, _) in TEST_20220401_BIN_FILES {
+        for path in TEST_LITE_20220401_BIN_FILES {
             match Database::from_file(path).await {
                 Ok(mut db) => {
-                    for addr in TEST_20220401_BIN_IPV4_ADDRS {
-                        let record = db.ipv4_lookup(Ipv4Addr::from(*addr)).await?;
+                    for addr in TEST_LITE_20220401_BIN_IPV4_ADDRS {
+                        let record = db.lookup_ipv4(Ipv4Addr::from(*addr)).await?;
+                        println!("{:?}", record);
                         assert!(record.is_some());
                     }
 
-                    for addr in TEST_20220401_BIN_IPV6_ADDRS {
-                        let record = db.ipv6_lookup(Ipv6Addr::from(*addr)).await?;
+                    for addr in TEST_LITE_20220401_BIN_IPV6_ADDRS {
+                        let record = db.lookup_ipv6(Ipv6Addr::from(*addr)).await?;
+                        println!("{:?}", record);
                         assert!(record.is_some());
                     }
                 }

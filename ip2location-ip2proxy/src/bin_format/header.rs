@@ -442,11 +442,11 @@ mod tests {
         io::{Cursor, ErrorKind as IoErrorKind},
     };
 
-    use crate::bin_format::TEST_20220401_BIN_FILES;
+    use crate::bin_format::TEST_LITE_20220401_BIN_FILES;
 
     #[test]
     fn test_parse_20220401() -> Result<(), Box<dyn error::Error>> {
-        for (path, r#type) in TEST_20220401_BIN_FILES {
+        for path in TEST_LITE_20220401_BIN_FILES {
             match File::open(path) {
                 Ok(mut f) => {
                     let mut buf = vec![0; 64];
@@ -457,7 +457,6 @@ mod tests {
                     match parser.parse(&mut Cursor::new(buf))? {
                         ControlFlow::Break((n_parsed, header)) => {
                             assert_eq!(n_parsed, LEN);
-                            assert_eq!(header.r#type, *r#type);
                             assert_eq!(header.date, NaiveDate::from_ymd(2022, 4, 1));
 
                             assert_eq!(header.ipv4_index_info.index_start, 65);
@@ -473,10 +472,6 @@ mod tests {
                                 header.ipv6_data_info.index_start,
                                 header.ipv4_data_info.index_end(header.num_fields)
                             );
-                            // assert_eq!(
-                            //     header.ipv6_data_info.index_end(header.num_fields),
-                            //     header.size
-                            // );
 
                             println!("parser:{:?}", parser);
                         }

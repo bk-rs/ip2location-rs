@@ -5,33 +5,23 @@ use tokio::{
     io::{AsyncReadExt as _, AsyncSeekExt as _},
 };
 
-use crate::{
-    bin_format::{
-        database::LookupError,
-        header::{Header, Type},
-        ipv6_index::Ipv6Index,
-        record::parse as record_parse,
-    },
-    record::Record,
-};
+use crate::bin_format::{database::LookupError, header::Header, ipv6_index::Ipv6Index};
 
 //
 #[derive(Debug)]
 pub struct Ipv6Data {
     file: TokioFile,
-    index: Ipv6Index,
-    info: Ipv6DataInfo,
-    r#type: Type,
+    offset_base: u32,
+    num_fields: u8,
     buf: Vec<u8>,
 }
 
 impl Ipv6Data {
-    pub fn new(file: TokioFile, index: Ipv6Index, header: Header) -> Self {
+    pub fn new(file: TokioFile, header: Header) -> Self {
         Self {
             file,
-            index,
-            info: header.ipv6_data_info,
-            r#type: header.r#type,
+            offset_base: header.ipv6_data_info.index_start,
+            num_fields: header.num_fields,
             buf: {
                 // 16 = ip_to(Ipv6Addr) size
                 let len = Ipv6Data::len(1, header.num_fields) as usize + 16;
@@ -49,18 +39,19 @@ impl Ipv6Data {
         n * ((num_fields as u32) * 4 + 12)
     }
 
-    pub async fn lookup(&mut self, ip: Ipv6Addr) -> Result<Option<Record>, LookupError> {
+    pub async fn lookup(
+        &mut self,
+        ip: Ipv6Addr,
+        ip_index: &Ipv6Index,
+    ) -> Result<Option<(Ipv6Addr, Ipv6Addr, Vec<u32>)>, LookupError> {
         // https://github.com/ip2location/ip2proxy-rust/blob/5bdd3ef61c2e243c1b61eda1475ca23eab2b7240/src/db.rs#L222-L241
 
-        let (mut low, mut high) = self.index.low_and_high(ip);
-
-        let fields = self.r#type.fields();
-        let num_fields = fields.len();
+        let (mut low, mut high) = ip_index.low_and_high(ip);
 
         while low <= high {
             let mid = (low + high) >> 1;
 
-            let offset = self.info.index_start + Ipv6Data::len(mid, num_fields as u8);
+            let offset = self.offset_base + Ipv6Data::len(mid, self.num_fields);
 
             self.file
                 .seek(SeekFrom::Start(offset as u64 - 1))
@@ -81,15 +72,17 @@ impl Ipv6Data {
 
             #[allow(clippy::collapsible_else_if)]
             if (ip >= ip_from) && (ip < ip_to) {
-                let record = record_parse(
-                    ip_from.into(),
-                    ip_to.into(),
-                    &self.buf[16..self.buf.len() - 16],
-                    &fields[1..],
-                )
-                .map_err(LookupError::RecordParseFailed)?;
+                let mut indexes = vec![];
+                for n in 1..self.num_fields as usize {
+                    let i = n - 1;
+                    let index = 16 + i * 4;
 
-                return Ok(Some(record));
+                    indexes.push(u32::from_ne_bytes(
+                        self.buf[index..index + 4].try_into().unwrap(),
+                    ))
+                }
+
+                return Ok(Some((ip_from, ip_to, indexes)));
             } else {
                 if ip < ip_from {
                     high = mid - 1;

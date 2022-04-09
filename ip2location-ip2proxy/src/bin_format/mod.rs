@@ -1,31 +1,26 @@
 pub mod database;
 pub mod field;
+pub mod field_data;
 pub mod header;
 pub mod ipv4_data;
 pub mod ipv4_index;
 pub mod ipv6_data;
 pub mod ipv6_index;
-pub mod record;
 
 #[cfg(test)]
-pub(crate) const TEST_20220401_BIN_FILES: &[(&str, self::header::Type)] = &[
-    (
-        "data/20220401/IP2PROXY-LITE-PX1.BIN",
-        self::header::Type::PX1,
-    ),
-    (
-        "data/20220401/IP2PROXY-LITE-PX11.BIN",
-        self::header::Type::PX11,
-    ),
+pub(crate) const TEST_LITE_20220401_BIN_FILES: &[&str] = &[
+    "data/ip2proxy-lite/20220401/IP2PROXY-LITE-PX1.BIN",
+    "data/ip2proxy-lite/20220401/IP2PROXY-LITE-PX2.BIN",
+    "data/ip2proxy-lite/20220401/IP2PROXY-LITE-PX11.BIN",
 ];
 
 #[cfg(test)]
-pub(crate) const TEST_20220401_BIN_IPV4_ADDRS: &[u32] = &[
+pub(crate) const TEST_LITE_20220401_BIN_IPV4_ADDRS: &[u32] = &[
     16778241, 16778497, 16780285, 3758093800, 3758094066, 3758094285,
 ];
 
 #[cfg(test)]
-pub(crate) const TEST_20220401_BIN_IPV6_ADDRS: &[u128] = &[
+pub(crate) const TEST_LITE_20220401_BIN_IPV6_ADDRS: &[u128] = &[
     281470698521601,
     281470698521857,
     281470698523645,
