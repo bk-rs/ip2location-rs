@@ -11,6 +11,7 @@ use tokio::fs::File as TokioFile;
 
 use crate::{
     bin_format::{
+        field::Field,
         field_data::FieldData,
         header::{
             Header, ParseError as HeaderParseError, Parser as HeaderParser,
@@ -205,6 +206,13 @@ impl Database {
             Some(x) => x,
             None => return Ok(None),
         };
+
+        // // TODO, can select fields
+        // let selected_fields = &[Field::COUNTRY, Field::PROXYTYPE, Field::CITY];
+        // let indexes = indexes
+        //     .into_iter()
+        //     .filter(|(field, _)| selected_fields.contains(field))
+        //     .collect::<Vec<_>>();
 
         let record = self
             .field_data
