@@ -12,6 +12,10 @@ keywords = []
 categories = []
 readme = "README.md"
 
+[features]
+default = ["_integration_tests"]
+_integration_tests = []
+
 [dependencies]
 serde = { version = "1.0", default_features = false, features = ["std", "derive"] }
 serde-enum-str = { version = "0.2", default-features = false }
@@ -24,3 +28,12 @@ lru = { version = "0.7", default-features = false, features = ["hashbrown"] }
 
 [dev-dependencies]
 tokio = { version = "1.17", features = ["macros", "rt"] }
+
+csv = { version = "1.1" }
+rand = { version = "0.8" }
+
+[package.metadata.cargo-all-features]
+skip_optional_dependencies = true
+denylist = [
+    "_integration_tests"
+]

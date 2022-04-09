@@ -1,16 +1,37 @@
 //! [Ref](https://lite.ip2location.com/database/px11-ip-proxytype-country-region-city-isp-domain-usagetype-asn-lastseen-threat-residential-provider#database-fields)
 
 use core::{convert::Infallible, fmt, str::FromStr};
-use std::net::IpAddr;
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
-use serde::Deserialize;
+use serde::{de, Deserialize, Deserializer};
 
 use crate::{proxy_type::ProxyType, usage_type::UsageType};
 
 //
+pub const PX11_CSV_HEADER: &[&str] = &[
+    "ip_from",
+    "ip_to",
+    "proxy_type",
+    "country_code",
+    "country_name",
+    "region_name",
+    "city_name",
+    "isp",
+    "domain",
+    "usage_type",
+    "asn",
+    "as_name",
+    "last_seen",
+    "threat",
+    "provider",
+];
+
+//
 #[derive(Deserialize, Debug, Clone)]
 pub struct Record {
+    #[serde(deserialize_with = "ip_deserialize")]
     pub ip_from: IpAddr,
+    #[serde(deserialize_with = "ip_deserialize")]
     pub ip_to: IpAddr,
     pub proxy_type: Option<ProxyType>,
     #[serde(with = "serde_field_with::to_and_from_string")]
@@ -40,7 +61,23 @@ pub struct Record {
     pub residential: Option<RecordValue>,
 }
 
-#[derive(Debug, Clone)]
+fn ip_deserialize<'de, D>(deserializer: D) -> Result<IpAddr, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = Box::<str>::deserialize(deserializer)?;
+    if let Ok(v) = s.parse::<u32>() {
+        Ok(Ipv4Addr::from(v).into())
+    } else if let Ok(v) = s.parse::<Ipv6Addr>() {
+        Ok(v.into())
+    } else if let Ok(v) = s.parse::<Ipv4Addr>() {
+        Ok(v.into())
+    } else {
+        Err(de::Error::custom(""))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum RecordValue {
     String(Box<str>),
     Usize(usize),
