@@ -9,9 +9,9 @@ pub mod ipv6_index;
 
 #[cfg(test)]
 pub(crate) const TEST_LITE_20220401_BIN_FILES: &[&str] = &[
-    "data/lite/20220401/IP2PROXY-LITE-PX1.BIN",
-    "data/lite/20220401/IP2PROXY-LITE-PX2.BIN",
-    "data/lite/20220401/IP2PROXY-LITE-PX11.BIN",
+    "data/ip2proxy-lite/20220401/IP2PROXY-LITE-PX1.BIN",
+    "data/ip2proxy-lite/20220401/IP2PROXY-LITE-PX2.BIN",
+    "data/ip2proxy-lite/20220401/IP2PROXY-LITE-PX11.BIN",
 ];
 
 #[cfg(test)]

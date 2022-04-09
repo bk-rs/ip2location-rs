@@ -7,9 +7,9 @@ use ip2location_ip2proxy::{
 };
 
 #[tokio::test]
-async fn test_csv_and_bin() -> Result<(), Box<dyn error::Error>> {
-    let path_csv = "data/lite/20220401/IP2PROXY-LITE-PX11.CSV";
-    let path_bin = "data/lite/20220401/IP2PROXY-LITE-PX11.BIN";
+async fn test_px11() -> Result<(), Box<dyn error::Error>> {
+    let path_csv = "data/ip2proxy-lite/20220401/IP2PROXY-LITE-PX11.CSV";
+    let path_bin = "data/ip2proxy-lite/20220401/IP2PROXY-LITE-PX11.BIN";
 
     //
     let mut rdr = ReaderBuilder::new()
