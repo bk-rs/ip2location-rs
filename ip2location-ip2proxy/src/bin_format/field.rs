@@ -3,7 +3,7 @@
 use crate::bin_format::header::Type;
 
 //
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Field {
     IP,
     COUNTRY,

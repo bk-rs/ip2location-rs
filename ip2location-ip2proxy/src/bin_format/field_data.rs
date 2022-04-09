@@ -37,13 +37,16 @@ impl FieldData {
         &mut self,
         ip_from: IpAddr,
         ip_to: IpAddr,
-        indexes: Vec<u32>,
+        indexes: Vec<(Field, u32)>,
     ) -> Result<Record, LookupError> {
-        debug_assert_eq!(indexes.len(), self.fields.len());
+        debug_assert_eq!(
+            indexes.iter().map(|(k, _)| *k).collect::<Vec<_>>(),
+            self.fields
+        );
 
-        let mut field_contents: Vec<Box<str>> = vec![];
+        let mut field_contents: Vec<(Field, Box<str>)> = vec![];
 
-        for index in indexes {
+        for (field, index) in indexes {
             // https://github.com/ip2location/ip2proxy-rust/blob/5bdd3ef61c2e243c1b61eda1475ca23eab2b7240/src/db.rs#L416
             self.file
                 .seek(SeekFrom::Start(index as u64))
@@ -82,11 +85,12 @@ impl FieldData {
                 }
             }
 
-            field_contents.push(
+            field_contents.push((
+                field,
                 str::from_utf8(&self.buf[1..1 + len as usize])
                     .unwrap()
                     .into(),
-            );
+            ));
 
             // TODO, https://github.com/ip2location/ip2proxy-rust/blob/5bdd3ef61c2e243c1b61eda1475ca23eab2b7240/src/db.rs#L252
             // maybe indexes require Field
@@ -94,15 +98,15 @@ impl FieldData {
 
         let mut record = Record::with_empty(ip_from, ip_to);
 
-        for (i, field) in self.fields.iter().enumerate() {
+        for (field, value) in field_contents {
             match field {
                 Field::IP => {}
                 Field::COUNTRY => {
                     // values: "-"
-                    record.country_code = field_contents[i].to_owned();
+                    record.country_code = value;
                 }
                 Field::PROXYTYPE => {
-                    record.proxy_type = Some(field_contents[i].to_owned().parse().unwrap());
+                    record.proxy_type = Some(value.parse().unwrap());
                 }
                 Field::REGION => {
                     // TODO,

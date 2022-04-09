@@ -5,14 +5,16 @@ use tokio::{
     io::{AsyncReadExt as _, AsyncSeekExt as _},
 };
 
-use crate::bin_format::{database::LookupError, header::Header, ipv6_index::Ipv6Index};
+use crate::bin_format::{
+    database::LookupError, field::Field, header::Header, ipv6_index::Ipv6Index,
+};
 
 //
 #[derive(Debug)]
 pub struct Ipv6Data {
     file: TokioFile,
     offset_base: u32,
-    num_fields: u8,
+    fields: Vec<Field>,
     buf: Vec<u8>,
 }
 
@@ -21,7 +23,7 @@ impl Ipv6Data {
         Self {
             file,
             offset_base: header.ipv6_data_info.index_start,
-            num_fields: header.num_fields,
+            fields: header.r#type.fields(),
             buf: {
                 // 16 = ip_to(Ipv6Addr) size
                 let len = Ipv6Data::len(1, header.num_fields) as usize + 16;
@@ -43,7 +45,7 @@ impl Ipv6Data {
         &mut self,
         ip: Ipv6Addr,
         ip_index: &Ipv6Index,
-    ) -> Result<Option<(Ipv6Addr, Ipv6Addr, Vec<u32>)>, LookupError> {
+    ) -> Result<Option<(Ipv6Addr, Ipv6Addr, Vec<(Field, u32)>)>, LookupError> {
         // https://github.com/ip2location/ip2proxy-rust/blob/5bdd3ef61c2e243c1b61eda1475ca23eab2b7240/src/db.rs#L222-L241
 
         let (mut low, mut high) = ip_index.low_and_high(ip);
@@ -51,7 +53,7 @@ impl Ipv6Data {
         while low <= high {
             let mid = (low + high) >> 1;
 
-            let offset = self.offset_base + Ipv6Data::len(mid, self.num_fields);
+            let offset = self.offset_base + Ipv6Data::len(mid, self.fields.len() as u8);
 
             self.file
                 .seek(SeekFrom::Start(offset as u64 - 1))
@@ -73,12 +75,12 @@ impl Ipv6Data {
             #[allow(clippy::collapsible_else_if)]
             if (ip >= ip_from) && (ip < ip_to) {
                 let mut indexes = vec![];
-                for n in 1..self.num_fields as usize {
-                    let i = n - 1;
+                for (i, field) in self.fields[1..].iter().enumerate() {
                     let index = 16 + i * 4;
 
-                    indexes.push(u32::from_ne_bytes(
-                        self.buf[index..index + 4].try_into().unwrap(),
+                    indexes.push((
+                        *field,
+                        u32::from_ne_bytes(self.buf[index..index + 4].try_into().unwrap()),
                     ))
                 }
 
