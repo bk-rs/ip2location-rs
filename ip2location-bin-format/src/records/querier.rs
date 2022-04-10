@@ -9,7 +9,7 @@ use futures_util::{AsyncRead, AsyncReadExt as _, AsyncSeek, AsyncSeekExt as _};
 use super::{Category, PositionRange};
 use crate::{
     header::schema::Schema,
-    record_field::{RecordField, RecordFields},
+    record_field::{RecordFieldContent, RecordFieldContents, RecordFields},
 };
 
 //
@@ -20,6 +20,7 @@ pub struct Querier<S> {
     //
     seek_from_start_base: u64,
     record_fields: RecordFields,
+    record_field_contents: RecordFieldContents,
     count: u32,
     buf: Vec<u8>,
 }
@@ -32,6 +33,8 @@ impl<S> Querier<S> {
         let record_fields = header
             .record_fields()
             .ok_or(BuildError::RecordFieldsMissing)?;
+
+        let record_field_contents = record_fields.to_contents();
 
         let buf = {
             let len = match category {
@@ -60,6 +63,7 @@ impl<S> Querier<S> {
                     .ok_or(BuildError::Unsupported)?,
             },
             record_fields,
+            record_field_contents,
             count: match category {
                 Category::V4 => header.v4_records_count,
                 Category::V6 => header.v6_records_count,
@@ -98,14 +102,7 @@ where
             start: mut low,
             end: mut high,
         }: PositionRange,
-    ) -> Result<Option<FindOutput>, FindError> {
-        if high > self.count {
-            high = self.count;
-        }
-        if low > high {
-            low = high;
-        }
-
+    ) -> Result<Option<(IpAddr, IpAddr, RecordFieldContents)>, FindError> {
         match ip {
             IpAddr::V4(_) => {
                 if !matches!(self.category, Category::V4) {
@@ -117,6 +114,13 @@ where
                     return Err(FindError::Unsupported);
                 }
             }
+        }
+
+        if high > self.count {
+            high = self.count;
+        }
+        if low > high {
+            low = high;
         }
 
         while low <= high {
@@ -169,41 +173,43 @@ where
                 }
             };
 
-            #[allow(clippy::collapsible_else_if)]
             if (ip >= ip_from) && (ip < ip_to) {
-                let mut record_fields_with_index = vec![];
-                for (i, (record_field, record_field_len)) in self
-                    .record_fields
-                    .field_and_len_list_without_ip()
-                    .into_iter()
-                    .enumerate()
-                {
+                let mut record_field_contents = self.record_field_contents.to_owned();
+                for (n, record_field_content) in record_field_contents.iter_mut().enumerate() {
                     let index = match self.category {
-                        Category::V4 => 4 + i as usize * record_field_len as usize,
-                        Category::V6 => 16 + i as usize * record_field_len as usize,
+                        Category::V4 => 4 + n as usize * 4,
+                        Category::V6 => 16 + n as usize * 4,
                     };
 
-                    record_fields_with_index.push((
-                        *record_field,
-                        u32::from_ne_bytes(
-                            self.buf[index..index + record_field_len as usize]
-                                .try_into()
-                                .unwrap(),
-                        ),
-                    ))
+                    let content_index =
+                        u32::from_ne_bytes(self.buf[index..index + 4].try_into().unwrap());
+
+                    match record_field_content {
+                        RecordFieldContent::COUNTRY(i, _, _) => *i = content_index,
+                        RecordFieldContent::REGION(i, _) => *i = content_index,
+                        RecordFieldContent::CITY(i, _) => *i = content_index,
+                        RecordFieldContent::LATITUDE(i, _) => *i = content_index,
+                        RecordFieldContent::LONGITUDE(i, _) => *i = content_index,
+                        RecordFieldContent::ZIPCODE(i, _) => *i = content_index,
+                        RecordFieldContent::TIMEZONE(i, _) => *i = content_index,
+                        RecordFieldContent::PROXYTYPE(i, _) => *i = content_index,
+                        RecordFieldContent::ISP(i, _) => *i = content_index,
+                        RecordFieldContent::DOMAIN(i, _) => *i = content_index,
+                        RecordFieldContent::USAGETYPE(i, _) => *i = content_index,
+                        RecordFieldContent::ASN(i, _) => *i = content_index,
+                        RecordFieldContent::AS(i, _) => *i = content_index,
+                        RecordFieldContent::LASTSEEN(i, _) => *i = content_index,
+                        RecordFieldContent::THREAT(i, _) => *i = content_index,
+                        RecordFieldContent::RESIDENTIAL(i, _) => *i = content_index,
+                        RecordFieldContent::PROVIDER(i, _) => *i = content_index,
+                    }
                 }
 
-                return Ok(Some(FindOutput {
-                    ip_from,
-                    ip_to,
-                    record_fields_with_index,
-                }));
+                return Ok(Some((ip_from, ip_to, record_field_contents)));
+            } else if ip < ip_from {
+                high = mid - 1;
             } else {
-                if ip < ip_from {
-                    high = mid - 1;
-                } else {
-                    low = mid + 1;
-                }
+                low = mid + 1;
             }
         }
 
@@ -216,7 +222,7 @@ where
 pub struct FindOutput {
     pub ip_from: IpAddr,
     pub ip_to: IpAddr,
-    pub record_fields_with_index: Vec<(RecordField, u32)>,
+    pub record_fields_with_index: RecordFieldContents,
 }
 
 //

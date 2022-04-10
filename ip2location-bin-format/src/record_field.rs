@@ -1,7 +1,7 @@
 //! https://lite.ip2location.com/ip2location-lite#db11-lite
 //! https://lite.ip2location.com/ip2proxy-lite#px11-lite
 
-use core::ops::Deref;
+use core::ops::{Deref, DerefMut};
 
 use crate::header::schema::{SchemaSubType, SchemaType};
 
@@ -224,12 +224,38 @@ impl RecordFields {
         self.record_bytes_len_for_ipv6() * n
     }
 
-    pub fn field_and_len_list_without_ip(&self) -> Vec<(&RecordField, u32)> {
+    pub fn to_contents(&self) -> RecordFieldContents {
         assert_eq!(self.0[0], RecordField::IP);
-        self.0[1..]
+
+        let inner = self.0[1..]
             .iter()
-            .map(|x| (x, RECORD_FIELD_LEN_WITHOUT_IP))
-            .collect::<Vec<_>>()
+            .map(|x| match x {
+                RecordField::IP => {
+                    unreachable!()
+                }
+                RecordField::COUNTRY => {
+                    RecordFieldContent::COUNTRY(0, Default::default(), Default::default())
+                }
+                RecordField::REGION => RecordFieldContent::REGION(0, Default::default()),
+                RecordField::CITY => RecordFieldContent::CITY(0, Default::default()),
+                RecordField::LATITUDE => RecordFieldContent::LATITUDE(0, Default::default()),
+                RecordField::LONGITUDE => RecordFieldContent::LONGITUDE(0, Default::default()),
+                RecordField::ZIPCODE => RecordFieldContent::ZIPCODE(0, Default::default()),
+                RecordField::TIMEZONE => RecordFieldContent::TIMEZONE(0, Default::default()),
+                RecordField::PROXYTYPE => RecordFieldContent::PROXYTYPE(0, Default::default()),
+                RecordField::ISP => RecordFieldContent::ISP(0, Default::default()),
+                RecordField::DOMAIN => RecordFieldContent::DOMAIN(0, Default::default()),
+                RecordField::USAGETYPE => RecordFieldContent::USAGETYPE(0, Default::default()),
+                RecordField::ASN => RecordFieldContent::ASN(0, Default::default()),
+                RecordField::AS => RecordFieldContent::AS(0, Default::default()),
+                RecordField::LASTSEEN => RecordFieldContent::LASTSEEN(0, Default::default()),
+                RecordField::THREAT => RecordFieldContent::THREAT(0, Default::default()),
+                RecordField::RESIDENTIAL => RecordFieldContent::RESIDENTIAL(0, Default::default()),
+                RecordField::PROVIDER => RecordFieldContent::PROVIDER(0, Default::default()),
+            })
+            .collect::<Vec<_>>();
+
+        RecordFieldContents(inner)
     }
 }
 
@@ -269,6 +295,48 @@ impl TryFrom<(SchemaType, SchemaSubType)> for RecordFields {
                 _ => Err(sub_type),
             },
         }
+    }
+}
+
+//
+#[derive(Debug, Clone)]
+pub enum RecordFieldContent {
+    // Common
+    COUNTRY(u32, Box<str>, Box<str>),
+    REGION(u32, Box<str>),
+    CITY(u32, Box<str>),
+    // IP2Location
+    LATITUDE(u32, Box<str>),
+    LONGITUDE(u32, Box<str>),
+    ZIPCODE(u32, Box<str>),
+    TIMEZONE(u32, Box<str>),
+    // IP2Proxy
+    PROXYTYPE(u32, Box<str>),
+    ISP(u32, Box<str>),
+    DOMAIN(u32, Box<str>),
+    USAGETYPE(u32, Box<str>),
+    ASN(u32, Box<str>),
+    AS(u32, Box<str>),
+    LASTSEEN(u32, Box<str>),
+    THREAT(u32, Box<str>),
+    RESIDENTIAL(u32, Box<str>),
+    PROVIDER(u32, Box<str>),
+}
+
+#[derive(Debug, Clone)]
+pub struct RecordFieldContents(pub Vec<RecordFieldContent>);
+
+impl Deref for RecordFieldContents {
+    type Target = Vec<RecordFieldContent>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for RecordFieldContents {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 

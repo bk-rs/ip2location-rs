@@ -13,10 +13,11 @@ categories = []
 readme = "README.md"
 
 [features]
-default = ["chrono"]
+default = ["chrono", "lru"]
 _integration_tests = []
 
 [dependencies]
 futures-util = { version = "0.3", default-features = false, features = ["std", "io"] }
 
 chrono = { version = "0.4", default-features = false, optional = true }
+lru = { version = "0.7", default-features = false, features = ["hashbrown"], optional = true }

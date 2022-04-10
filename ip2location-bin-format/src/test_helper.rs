@@ -20,10 +20,29 @@ fn visit_dirs(dir: &Path, cb: &dyn Fn(&DirEntry)) -> Result<(), IoError> {
     Ok(())
 }
 
-pub(crate) fn bin_files(cb: &dyn Fn(&PathBuf)) -> Result<(), IoError> {
+pub(crate) fn ip2location_bin_files(cb: &dyn Fn(&PathBuf)) -> Result<(), IoError> {
     visit_dirs(Path::new("data"), &|entry| {
         let path = entry.path();
-        if path.as_os_str().to_str().map(|x| x.ends_with(".BIN")) == Some(true) {
+        if path
+            .as_os_str()
+            .to_str()
+            .map(|x| x.contains("/IP2LOCATION") && x.ends_with(".BIN"))
+            == Some(true)
+        {
+            cb(&path)
+        }
+    })
+}
+
+pub(crate) fn ip2proxy_bin_files(cb: &dyn Fn(&PathBuf)) -> Result<(), IoError> {
+    visit_dirs(Path::new("data"), &|entry| {
+        let path = entry.path();
+        if path
+            .as_os_str()
+            .to_str()
+            .map(|x| x.contains("/IP2PROXY") && x.ends_with(".BIN"))
+            == Some(true)
+        {
             cb(&path)
         }
     })
