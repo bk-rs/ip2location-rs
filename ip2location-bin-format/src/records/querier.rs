@@ -99,6 +99,13 @@ where
             end: mut high,
         }: PositionRange,
     ) -> Result<Option<FindOutput>, FindError> {
+        if high > self.count {
+            high = self.count;
+        }
+        if low > high {
+            low = high;
+        }
+
         match ip {
             IpAddr::V4(_) => {
                 if !matches!(self.category, Category::V4) {

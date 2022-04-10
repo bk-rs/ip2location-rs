@@ -55,8 +55,6 @@ impl Parser {
                 1 => {
                     let sub_type = SchemaSubType(self.buf[0]);
 
-                    // Verify later
-
                     self.state = State::SubTypeParsed;
                     self.inner.sub_type = sub_type;
                     n_parsed += n;
@@ -73,8 +71,6 @@ impl Parser {
                 0 => return Ok(ControlFlow::Continue(n_parsed)),
                 1 => {
                     let num_record_fields = self.buf[0];
-
-                    // Verify later
 
                     self.state = State::NumRecordFieldsParsed;
                     self.inner.num_record_fields = num_record_fields;
@@ -141,8 +137,6 @@ impl Parser {
                 4 => {
                     let position_start = u32::from_ne_bytes(self.buf);
 
-                    // Verify later
-
                     self.state = State::V4RecordsPositionStartParsed;
                     self.inner.v4_records_position_start = position_start;
                     n_parsed += n;
@@ -177,8 +171,6 @@ impl Parser {
                 4 => {
                     let position_start = u32::from_ne_bytes(self.buf);
 
-                    // Verify later
-
                     self.state = State::V6RecordsPositionStartParsed;
                     self.inner.v6_records_position_start = position_start;
                     n_parsed += n;
@@ -196,8 +188,6 @@ impl Parser {
                 4 => {
                     let position_start = u32::from_ne_bytes(self.buf);
 
-                    // Verify later
-
                     self.state = State::V4IndexPositionStartParsed;
                     self.inner.v4_index_position_start = position_start;
                     n_parsed += n;
@@ -214,8 +204,6 @@ impl Parser {
                 0..=3 => return Ok(ControlFlow::Continue(n_parsed)),
                 4 => {
                     let position_start = u32::from_ne_bytes(self.buf);
-
-                    // Verify later
 
                     self.state = State::V6IndexPositionStartParsed;
                     self.inner.v6_index_position_start = position_start;
