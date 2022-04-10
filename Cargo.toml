@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "ip2location-bin-format",
     "ip2location-continent-multilingual",
     "ip2location-country-information",
     "ip2location-country-multilingual",

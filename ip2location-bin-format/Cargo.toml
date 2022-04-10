@@ -1,0 +1,22 @@
+[package]
+name = "ip2location-bin-format"
+version = "0.0.0"
+authors = ["vkill <vkill.net@gmail.com>"]
+edition = "2021"
+description = "IP2Location BIN Format"
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/bk-rs/ip2location-rs"
+homepage = "https://github.com/bk-rs/ip2location-rs"
+documentation = "https://docs.rs/ip2location-bin-format"
+keywords = []
+categories = []
+readme = "README.md"
+
+[features]
+default = ["chrono"]
+_integration_tests = []
+
+[dependencies]
+futures-util = { version = "0.3", default-features = false, features = ["std", "io"] }
+
+chrono = { version = "0.4", default-features = false, optional = true }
