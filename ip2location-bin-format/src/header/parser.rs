@@ -315,47 +315,40 @@ mod tests {
     #[test]
     fn test_parse() -> Result<(), Box<dyn error::Error>> {
         ip2location_bin_files(&|path| {
-            match File::open(&path) {
-                Ok(mut f) => {
-                    let mut buf = vec![0; HEADER_LEN as usize];
-                    f.read_exact(&mut buf).unwrap();
+            let mut f = File::open(&path).unwrap();
+            let mut buf = vec![0; HEADER_LEN as usize];
+            f.read_exact(&mut buf).unwrap();
 
-                    //
-                    let mut parser = Parser::new();
-                    match parser.parse(&mut Cursor::new(buf)).unwrap() {
-                        ControlFlow::Break((_, schema)) => {
-                            assert_eq!(schema.r#type, SchemaType::IP2Location);
-                            println!("path:{:?}, schema:{:?}", path, schema);
-                        }
-                        x => {
-                            panic!("path:{:?}, ret:{:?}, parser:{:?}", path, x, parser)
-                        }
-                    }
+            //
+            let mut parser = Parser::new();
+            match parser.parse(&mut Cursor::new(buf)).unwrap() {
+                ControlFlow::Break((_, schema)) => {
+                    assert_eq!(schema.r#type, SchemaType::IP2Location);
+                    println!("path:{:?}, schema:{:?}", path, schema);
                 }
-                Err(err) => panic!("path:{:?}, err:{:?}", path, err),
-            };
+                x => {
+                    panic!("path:{:?}, ret:{:?}, parser:{:?}", path, x, parser)
+                }
+            }
         })?;
 
         ip2proxy_bin_files(&|path| {
-            match File::open(&path) {
-                Ok(mut f) => {
-                    let mut buf = vec![0; HEADER_LEN as usize];
-                    f.read_exact(&mut buf).unwrap();
+            let mut f = File::open(&path).unwrap();
 
-                    //
-                    let mut parser = Parser::new();
-                    match parser.parse(&mut Cursor::new(buf)).unwrap() {
-                        ControlFlow::Break((_, schema)) => {
-                            assert_eq!(schema.r#type, SchemaType::IP2Proxy);
-                            println!("path:{:?}, schema:{:?}", path, schema);
-                        }
-                        x => {
-                            panic!("path:{:?}, ret:{:?}, parser:{:?}", path, x, parser)
-                        }
-                    }
+            let mut buf = vec![0; HEADER_LEN as usize];
+            f.read_exact(&mut buf).unwrap();
+
+            //
+            let mut parser = Parser::new();
+            match parser.parse(&mut Cursor::new(buf)).unwrap() {
+                ControlFlow::Break((_, schema)) => {
+                    assert_eq!(schema.r#type, SchemaType::IP2Proxy);
+                    println!("path:{:?}, schema:{:?}", path, schema);
                 }
-                Err(err) => panic!("path:{:?}, err:{:?}", path, err),
-            };
+                x => {
+                    panic!("path:{:?}, ret:{:?}, parser:{:?}", path, x, parser)
+                }
+            }
         })?;
 
         Ok(())
