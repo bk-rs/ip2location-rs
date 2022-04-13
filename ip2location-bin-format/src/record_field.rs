@@ -324,7 +324,7 @@ pub enum RecordFieldContent {
 }
 
 #[derive(Debug, Clone)]
-pub struct RecordFieldContents(pub Vec<RecordFieldContent>);
+pub struct RecordFieldContents(Vec<RecordFieldContent>);
 
 impl Deref for RecordFieldContents {
     type Target = Vec<RecordFieldContent>;
@@ -337,6 +337,32 @@ impl Deref for RecordFieldContents {
 impl DerefMut for RecordFieldContents {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
+    }
+}
+
+impl RecordFieldContents {
+    pub fn select(&mut self, record_fields: &[RecordField]) {
+        self.0.retain(|x| match x {
+            RecordFieldContent::COUNTRY(_, _, _) => record_fields.contains(&RecordField::COUNTRY),
+            RecordFieldContent::REGION(_, _) => record_fields.contains(&RecordField::REGION),
+            RecordFieldContent::CITY(_, _) => record_fields.contains(&RecordField::CITY),
+            RecordFieldContent::LATITUDE(_, _) => record_fields.contains(&RecordField::LATITUDE),
+            RecordFieldContent::LONGITUDE(_, _) => record_fields.contains(&RecordField::LONGITUDE),
+            RecordFieldContent::ZIPCODE(_, _) => record_fields.contains(&RecordField::ZIPCODE),
+            RecordFieldContent::TIMEZONE(_, _) => record_fields.contains(&RecordField::TIMEZONE),
+            RecordFieldContent::PROXYTYPE(_, _) => record_fields.contains(&RecordField::PROXYTYPE),
+            RecordFieldContent::ISP(_, _) => record_fields.contains(&RecordField::ISP),
+            RecordFieldContent::DOMAIN(_, _) => record_fields.contains(&RecordField::DOMAIN),
+            RecordFieldContent::USAGETYPE(_, _) => record_fields.contains(&RecordField::USAGETYPE),
+            RecordFieldContent::ASN(_, _) => record_fields.contains(&RecordField::ASN),
+            RecordFieldContent::AS(_, _) => record_fields.contains(&RecordField::AS),
+            RecordFieldContent::LASTSEEN(_, _) => record_fields.contains(&RecordField::LASTSEEN),
+            RecordFieldContent::THREAT(_, _) => record_fields.contains(&RecordField::THREAT),
+            RecordFieldContent::RESIDENTIAL(_, _) => {
+                record_fields.contains(&RecordField::RESIDENTIAL)
+            }
+            RecordFieldContent::PROVIDER(_, _) => record_fields.contains(&RecordField::PROVIDER),
+        });
     }
 }
 

@@ -15,7 +15,6 @@ pub const COUNTRY_NAME_INDEX_OFFSET: usize = 3;
 #[derive(Debug)]
 pub struct Querier<S> {
     stream: S,
-    //
     buf: Vec<u8>,
     static_cache: BTreeMap<u32, Box<str>>,
     #[cfg(feature = "lru")]
@@ -29,7 +28,6 @@ impl<S> Querier<S> {
     pub fn new(stream: S) -> Self {
         Self {
             stream,
-            //
             buf: {
                 let len = 1 + 255;
                 let mut buf = Vec::with_capacity(len);

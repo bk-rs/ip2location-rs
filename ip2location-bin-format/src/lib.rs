@@ -1,5 +1,6 @@
 //
 pub mod content;
+pub mod database;
 pub mod header;
 pub mod index;
 pub mod record_field;
