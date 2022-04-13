@@ -8,7 +8,7 @@ pub const INDEX_ELEMENT_LEN: u32 = 4;
 pub mod builder;
 pub mod querier;
 
-pub use querier::Querier;
+pub use querier::{V4Querier, V6Querier};
 
 //
 pub fn ipv4_addr_position(ip: Ipv4Addr) -> u32 {

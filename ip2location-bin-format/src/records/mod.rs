@@ -2,7 +2,7 @@
 pub mod builder;
 pub mod querier;
 
-pub use querier::Querier;
+pub use querier::{V4Querier, V6Querier};
 
 //
 pub struct PositionRange {
@@ -13,11 +13,4 @@ impl PositionRange {
     pub fn new(start: u32, end: u32) -> Self {
         Self { start, end }
     }
-}
-
-//
-#[derive(Debug, Clone, Copy)]
-pub enum Category {
-    V4,
-    V6,
 }

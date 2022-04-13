@@ -1,121 +1,62 @@
-use core::fmt;
 use std::{
-    io::{Error as IoError, SeekFrom},
+    io::SeekFrom,
     net::{IpAddr, Ipv4Addr, Ipv6Addr},
 };
 
 use futures_util::{AsyncRead, AsyncReadExt as _, AsyncSeek, AsyncSeekExt as _};
 
-use super::{Category, PositionRange};
+use super::error::Error;
 use crate::{
-    header::schema::Schema,
     record_field::{RecordFieldContent, RecordFieldContents, RecordFields},
+    records::PositionRange,
 };
 
 //
 #[derive(Debug)]
-pub struct Querier<S> {
+pub(super) struct Inner<S> {
     stream: S,
-    category: Category,
-    //
+    count: u32,
     seek_from_start_base: u64,
     record_fields: RecordFields,
     record_field_contents: RecordFieldContents,
-    count: u32,
     buf: Vec<u8>,
 }
 
-//
-//
-//
-impl<S> Querier<S> {
-    pub fn new(stream: S, category: Category, header: Schema) -> Result<Self, BuildError> {
-        let record_fields = header
-            .record_fields()
-            .ok_or(BuildError::RecordFieldsMissing)?;
-
-        let record_field_contents = record_fields.to_contents();
-
-        let buf = {
-            let len = match category {
-                Category::V4 => record_fields.record_bytes_len_for_ipv4_with_double_ip(),
-                Category::V6 => {
-                    if header.has_v6() {
-                        record_fields.record_bytes_len_for_ipv6_with_double_ip()
-                    } else {
-                        return Err(BuildError::Unsupported);
-                    }
-                }
-            } as usize;
-            let mut buf = Vec::with_capacity(len);
-            buf.resize_with(len, Default::default);
-            buf
-        };
-
-        Ok(Self {
+impl<S> Inner<S> {
+    pub(super) fn new(
+        stream: S,
+        count: u32,
+        seek_from_start_base: u64,
+        record_fields: RecordFields,
+        record_field_contents: RecordFieldContents,
+        buf: Vec<u8>,
+    ) -> Self {
+        Self {
             stream,
-            category,
-            //
-            seek_from_start_base: match category {
-                Category::V4 => header.v4_records_seek_from_start(),
-                Category::V6 => header
-                    .v6_records_seek_from_start()
-                    .ok_or(BuildError::Unsupported)?,
-            },
+            count,
+            seek_from_start_base,
             record_fields,
             record_field_contents,
-            count: match category {
-                Category::V4 => header.v4_records_count,
-                Category::V6 => header.v6_records_count,
-            },
             buf,
-        })
+        }
     }
 }
 
 //
-#[derive(Debug)]
-pub enum BuildError {
-    RecordFieldsMissing,
-    Unsupported,
-}
-
-impl fmt::Display for BuildError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl std::error::Error for BuildError {}
-
 //
 //
-//
-impl<S> Querier<S>
+impl<S> Inner<S>
 where
     S: AsyncSeek + AsyncRead + Unpin,
 {
-    pub async fn find(
+    pub(super) async fn query(
         &mut self,
         ip: IpAddr,
         PositionRange {
             start: mut low,
             end: mut high,
         }: PositionRange,
-    ) -> Result<Option<(IpAddr, IpAddr, RecordFieldContents)>, FindError> {
-        match ip {
-            IpAddr::V4(_) => {
-                if !matches!(self.category, Category::V4) {
-                    return Err(FindError::Unsupported);
-                }
-            }
-            IpAddr::V6(_) => {
-                if !matches!(self.category, Category::V6) {
-                    return Err(FindError::Unsupported);
-                }
-            }
-        }
-
+    ) -> Result<Option<(IpAddr, IpAddr, RecordFieldContents)>, Error> {
         if high > self.count {
             high = self.count;
         }
@@ -127,39 +68,39 @@ where
             let mid = (low + high) >> 1;
 
             let seek_from_start = self.seek_from_start_base
-                + match self.category {
-                    Category::V4 => self.record_fields.records_bytes_len_for_ipv4(mid),
-                    Category::V6 => self.record_fields.records_bytes_len_for_ipv6(mid),
+                + match ip {
+                    IpAddr::V4(_) => self.record_fields.records_bytes_len_for_ipv4(mid),
+                    IpAddr::V6(_) => self.record_fields.records_bytes_len_for_ipv6(mid),
                 } as u64;
 
             self.stream
                 .seek(SeekFrom::Start(seek_from_start))
                 .await
-                .map_err(FindError::SeekFailed)?;
+                .map_err(Error::SeekFailed)?;
 
             self.stream
                 .read_exact(&mut self.buf)
                 .await
-                .map_err(FindError::ReadFailed)?;
+                .map_err(Error::ReadFailed)?;
 
-            let ip_from: IpAddr = match self.category {
-                Category::V4 => {
+            let ip_from: IpAddr = match ip {
+                IpAddr::V4(_) => {
                     Ipv4Addr::from(u32::from_ne_bytes(self.buf[0..4].try_into().unwrap())).into()
                 }
-                Category::V6 => {
+                IpAddr::V6(_) => {
                     let array: [u8; 16] = self.buf[0..16].try_into().unwrap();
                     Ipv6Addr::from(array).into()
                 }
             };
             let ip_to: IpAddr = if high < self.count {
-                match self.category {
-                    Category::V4 => Ipv4Addr::from(u32::from_ne_bytes(
+                match ip {
+                    IpAddr::V4(_) => Ipv4Addr::from(u32::from_ne_bytes(
                         self.buf[self.buf.len() - 4..self.buf.len()]
                             .try_into()
                             .unwrap(),
                     ))
                     .into(),
-                    Category::V6 => {
+                    IpAddr::V6(_) => {
                         let array: [u8; 16] = self.buf[self.buf.len() - 16..self.buf.len()]
                             .try_into()
                             .unwrap();
@@ -176,9 +117,9 @@ where
             if (ip >= ip_from) && (ip < ip_to) {
                 let mut record_field_contents = self.record_field_contents.to_owned();
                 for (n, record_field_content) in record_field_contents.iter_mut().enumerate() {
-                    let index = match self.category {
-                        Category::V4 => 4 + n as usize * 4,
-                        Category::V6 => 16 + n as usize * 4,
+                    let index = match ip {
+                        IpAddr::V4(_) => 4 + n as usize * 4,
+                        IpAddr::V6(_) => 16 + n as usize * 4,
                     };
 
                     let content_index =
@@ -216,27 +157,3 @@ where
         Ok(None)
     }
 }
-
-//
-#[derive(Debug)]
-pub struct FindOutput {
-    pub ip_from: IpAddr,
-    pub ip_to: IpAddr,
-    pub record_fields_with_index: RecordFieldContents,
-}
-
-//
-#[derive(Debug)]
-pub enum FindError {
-    Unsupported,
-    SeekFailed(IoError),
-    ReadFailed(IoError),
-}
-
-impl fmt::Display for FindError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl std::error::Error for FindError {}
