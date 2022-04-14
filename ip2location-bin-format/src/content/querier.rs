@@ -194,6 +194,7 @@ where
                                 // https://github.com/ip2location/ip2proxy-rust/blob/5bdd3ef61c2e243c1b61eda1475ca23eab2b7240/src/db.rs#L252
                                 // Not 1 + len
                                 self.buf.rotate_left(COUNTRY_NAME_INDEX_OFFSET);
+                                n_read -= COUNTRY_NAME_INDEX_OFFSET;
 
                                 continue;
                             }
