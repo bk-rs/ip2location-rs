@@ -423,6 +423,16 @@ mod tests {
                 let ret = q.lookup(*ip, None).await?;
                 assert!(ret.is_none());
             }
+
+            if path.as_os_str().to_str().map(|x| x.contains("/20220401")) == Some(true) {
+                let ret = q
+                    .lookup(
+                        Ipv6Addr::from(58569071813452613185929873510317667680).into(),
+                        None,
+                    )
+                    .await?;
+                println!("{:?}", ret)
+            }
         }
 
         Ok(())

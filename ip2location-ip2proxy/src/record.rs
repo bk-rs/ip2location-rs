@@ -49,6 +49,8 @@ where
     let s = Box::<str>::deserialize(deserializer)?;
     if let Ok(v) = s.parse::<u32>() {
         Ok(Ipv4Addr::from(v).into())
+    } else if let Ok(v) = s.parse::<u128>() {
+        Ok(Ipv6Addr::from(v).into())
     } else if let Ok(v) = s.parse::<Ipv6Addr>() {
         Ok(v.into())
     } else if let Ok(v) = s.parse::<Ipv4Addr>() {
@@ -92,6 +94,12 @@ impl fmt::Display for RecordValue {
             RecordValue::Usize(v) => write!(f, "{}", v),
             RecordValue::Unknown => write!(f, "-"),
         }
+    }
+}
+
+impl RecordValue {
+    pub fn is_unknown(&self) -> bool {
+        matches!(self, Self::Unknown)
     }
 }
 

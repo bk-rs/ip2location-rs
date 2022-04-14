@@ -89,8 +89,7 @@ where
                     Ipv4Addr::from(u32::from_ne_bytes(self.buf[0..4].try_into().unwrap())).into()
                 }
                 IpAddr::V6(_) => {
-                    let array: [u8; 16] = self.buf[0..16].try_into().unwrap();
-                    Ipv6Addr::from(array).into()
+                    Ipv6Addr::from(u128::from_ne_bytes(self.buf[0..16].try_into().unwrap())).into()
                 }
             };
             let ip_to: IpAddr = if high < self.count {
@@ -101,12 +100,12 @@ where
                             .unwrap(),
                     ))
                     .into(),
-                    IpAddr::V6(_) => {
-                        let array: [u8; 16] = self.buf[self.buf.len() - 16..self.buf.len()]
+                    IpAddr::V6(_) => Ipv6Addr::from(u128::from_ne_bytes(
+                        self.buf[self.buf.len() - 16..self.buf.len()]
                             .try_into()
-                            .unwrap();
-                        Ipv6Addr::from(array).into()
-                    }
+                            .unwrap(),
+                    ))
+                    .into(),
                 }
             } else {
                 match ip_from {
@@ -166,7 +165,7 @@ where
             }
             #[allow(clippy::collapsible_else_if)]
             if self.count == u32::MAX {
-                if low >= self.count {
+                if low == self.count {
                     return Ok(None);
                 }
             } else {
@@ -175,7 +174,7 @@ where
                 }
             }
 
-            if n_depth > 30 {
+            if n_depth > 16 {
                 return Ok(None);
             }
 
