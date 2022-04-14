@@ -327,6 +327,10 @@ where
         ip: Ipv6Addr,
         selected_fields: impl Into<Option<&[RecordField]>>,
     ) -> Result<Option<(IpAddr, IpAddr, RecordFieldContents)>, LookupError> {
+        if let Some(ip) = ip.to_ipv4() {
+            return self.lookup_ipv4(ip, selected_fields).await;
+        }
+
         let position_range = self
             .index_v6
             .as_ref()

@@ -76,6 +76,8 @@ where
         ip: Ipv6Addr,
         position_range: PositionRange,
     ) -> Result<Option<(IpAddr, IpAddr, RecordFieldContents)>, Error> {
+        debug_assert!(ip.to_ipv4().is_none());
+
         self.inner.query(ip.into(), position_range).await
     }
 }

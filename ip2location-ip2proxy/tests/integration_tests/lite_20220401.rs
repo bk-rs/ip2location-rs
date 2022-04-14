@@ -1,9 +1,7 @@
-use std::{error, fs::File};
+use std::{error, fs::File, net::IpAddr};
 
 use csv::{ReaderBuilder, StringRecord};
-use ip2location_ip2proxy::{
-    bin_format::Database, csv_format::CSV_HEADER_PX11, proxy_type::ProxyType, record::Record,
-};
+use ip2location_ip2proxy::{bin_format::Database, csv_format::CSV_HEADER_PX11, record::Record};
 
 #[tokio::test]
 async fn test_px11() -> Result<(), Box<dyn error::Error>> {
@@ -78,30 +76,47 @@ async fn test_px11() -> Result<(), Box<dyn error::Error>> {
         let record = record?;
         let row: Record = record.deserialize(Some(&header))?;
 
-        match db.lookup(row.ip_from, None).await? {
-            Some(record) => {
-                if record.proxy_type.is_some() && record.proxy_type != Some(ProxyType::Unknown) {
-                    count_v6 += 1;
+        let record = db.lookup(row.ip_from, None).await?.unwrap();
+        count_v6 += 1;
 
-                    assert!(record.ip_from >= row.ip_from);
-                    assert!(record.ip_from <= row.ip_to);
-                    assert_eq!(record.proxy_type, row.proxy_type);
-                    assert_eq!(record.country_code, row.country_code);
-                    assert_eq!(record.country_name, row.country_name);
-                    assert_eq!(record.region_name, row.region_name);
-                    assert_eq!(record.city_name, row.city_name);
-                    assert_eq!(record.isp, row.isp);
-                    assert_eq!(record.domain, row.domain);
-                    assert_eq!(record.usage_type, row.usage_type);
-                    assert_eq!(record.asn, row.asn);
-                    assert_eq!(record.as_name, row.as_name);
-                    assert_eq!(record.last_seen, row.last_seen);
-                    assert_eq!(record.threat, row.threat);
-                    assert_eq!(record.provider, row.provider);
-                    assert_eq!(record.residential, row.residential);
-                }
-            }
-            None => {}
+        let is_ipv4 = match row.ip_from {
+            IpAddr::V4(_) => true,
+            IpAddr::V6(ip) => ip.to_ipv4().is_some(),
+        };
+
+        if is_ipv4 {
+            assert_eq!(record.proxy_type, row.proxy_type);
+            assert_eq!(record.country_code, row.country_code);
+            assert_eq!(record.country_name, row.country_name);
+            assert_eq!(record.region_name, row.region_name);
+            assert_eq!(record.city_name, row.city_name);
+            assert_eq!(record.isp, row.isp);
+            assert_eq!(record.domain, row.domain);
+            assert_eq!(record.usage_type, row.usage_type);
+            assert_eq!(record.asn, row.asn);
+            assert_eq!(record.as_name, row.as_name);
+            assert_eq!(record.last_seen, row.last_seen);
+            // String("SPAM") != Unknown
+            // assert_eq!(record.threat, row.threat);
+            assert_eq!(record.provider, row.provider);
+            assert_eq!(record.residential, row.residential);
+        } else {
+            assert!(record.ip_from >= row.ip_from);
+            assert!(record.ip_from <= row.ip_to);
+            assert_eq!(record.proxy_type, row.proxy_type);
+            assert_eq!(record.country_code, row.country_code);
+            assert_eq!(record.country_name, row.country_name);
+            assert_eq!(record.region_name, row.region_name);
+            assert_eq!(record.city_name, row.city_name);
+            assert_eq!(record.isp, row.isp);
+            assert_eq!(record.domain, row.domain);
+            assert_eq!(record.usage_type, row.usage_type);
+            assert_eq!(record.asn, row.asn);
+            assert_eq!(record.as_name, row.as_name);
+            assert_eq!(record.last_seen, row.last_seen);
+            assert_eq!(record.threat, row.threat);
+            assert_eq!(record.provider, row.provider);
+            assert_eq!(record.residential, row.residential);
         }
     }
     println!("count_v6:{}", count_v6);
