@@ -64,11 +64,8 @@ where
             low = high;
         }
 
+        let mut n_depth = 0;
         while low <= high {
-            if high == 0 {
-                return Ok(None);
-            }
-
             let mid = (low + high) >> 1;
 
             let seek_from_start = self.seek_from_start_base
@@ -113,8 +110,12 @@ where
                 }
             } else {
                 match ip_from {
-                    IpAddr::V4(ip_from) => Ipv4Addr::from(u32::from(ip_from) + 1).into(),
-                    IpAddr::V6(ip_from) => Ipv6Addr::from(u128::from(ip_from) + 1).into(),
+                    IpAddr::V4(ip_from) => {
+                        Ipv4Addr::from(u32::from(ip_from).saturating_add(1)).into()
+                    }
+                    IpAddr::V6(ip_from) => {
+                        Ipv6Addr::from(u128::from(ip_from).saturating_add(1)).into()
+                    }
                 }
             };
 
@@ -152,10 +153,33 @@ where
 
                 return Ok(Some((ip_from, ip_to, record_field_contents)));
             } else if ip < ip_from {
-                high = mid - 1;
+                high = mid.saturating_sub(1);
             } else {
-                low = mid + 1;
+                low = mid.saturating_add(1);
             }
+
+            //
+            //
+            //
+            if high == 0 {
+                return Ok(None);
+            }
+            #[allow(clippy::collapsible_else_if)]
+            if self.count == u32::MAX {
+                if low >= self.count {
+                    return Ok(None);
+                }
+            } else {
+                if low > self.count {
+                    return Ok(None);
+                }
+            }
+
+            if n_depth > 30 {
+                return Ok(None);
+            }
+
+            n_depth += 1;
         }
 
         Ok(None)

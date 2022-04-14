@@ -1,10 +1,7 @@
 use std::{error, fs::File};
 
 use csv::{ReaderBuilder, StringRecord};
-use ip2location_ip2proxy::{
-    bin_format::database::Database,
-    record::{Record, PX11_CSV_HEADER},
-};
+use ip2location_ip2proxy::{bin_format::Database, csv_format::CSV_HEADER_PX11, record::Record};
 
 #[tokio::test]
 async fn test_px11() -> Result<(), Box<dyn error::Error>> {
@@ -16,10 +13,10 @@ async fn test_px11() -> Result<(), Box<dyn error::Error>> {
         .has_headers(false)
         .from_reader(File::open(path_csv)?);
     let iter = rdr.records();
-    let header = StringRecord::from(PX11_CSV_HEADER);
+    let header = StringRecord::from(CSV_HEADER_PX11);
 
     //
-    let mut db = Database::from_file(path_bin).await?;
+    let mut db = Database::<async_compat::Compat<tokio::fs::File>>::new(path_bin).await?;
 
     //
     for (i, record) in iter.enumerate() {
@@ -34,7 +31,7 @@ async fn test_px11() -> Result<(), Box<dyn error::Error>> {
         let record = record?;
         let row: Record = record.deserialize(Some(&header))?;
 
-        let record = db.lookup(row.ip_from).await?.unwrap();
+        let record = db.lookup(row.ip_from, None).await?.unwrap();
 
         assert!(record.ip_from >= row.ip_from);
         assert!(record.ip_from <= row.ip_to);

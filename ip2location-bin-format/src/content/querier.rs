@@ -54,7 +54,7 @@ where
     ) -> Result<(), FillError> {
         for record_field_content in record_field_contents.iter_mut() {
             //
-            let (seek_from_start, estimatable_len) = match record_field_content {
+            let (seek_from_start, len_estimatable) = match record_field_content {
                 RecordFieldContent::COUNTRY(i, v, v_name) => {
                     if let Some(value) = self.static_cache.get(i) {
                         *v = value.to_owned();
@@ -71,6 +71,7 @@ where
 
                     (*i, 28)
                 }
+                #[allow(unused_variables)]
                 RecordFieldContent::REGION(i, v) => {
                     #[cfg(feature = "lru")]
                     {
@@ -83,6 +84,7 @@ where
 
                     (*i, 20)
                 }
+                #[allow(unused_variables)]
                 RecordFieldContent::CITY(i, v) => {
                     #[cfg(feature = "lru")]
                     {
@@ -142,7 +144,7 @@ where
             //
             let n = self
                 .stream
-                .read(&mut self.buf[..estimatable_len + 1])
+                .read(&mut self.buf[..len_estimatable + 1])
                 .await
                 .map_err(FillError::ReadFailed)?;
             n_read += n;
@@ -153,6 +155,7 @@ where
             //
             let mut n_loop = 0;
             loop {
+                //
                 loop {
                     if !self.buf.is_empty() {
                         let len = self.buf[0];
@@ -198,12 +201,11 @@ where
                                 *v_name = value.to_owned();
                                 self.static_cache
                                     .insert(*i + COUNTRY_NAME_INDEX_OFFSET as u32, value);
-
-                                break;
                             }
                             _ => unreachable!(),
                         }
                     }
+                    #[allow(unused_variables)]
                     RecordFieldContent::REGION(i, v) => {
                         *v = value.to_owned();
                         #[cfg(feature = "lru")]
@@ -211,6 +213,7 @@ where
                             self.lru_cache.push(*i, value);
                         }
                     }
+                    #[allow(unused_variables)]
                     RecordFieldContent::CITY(i, v) => {
                         *v = value.to_owned();
                         #[cfg(feature = "lru")]
@@ -263,6 +266,8 @@ where
                         *v = value.to_owned();
                     }
                 }
+
+                break;
             }
         }
 

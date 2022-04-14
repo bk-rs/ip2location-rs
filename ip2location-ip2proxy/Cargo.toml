@@ -13,18 +13,24 @@ categories = []
 readme = "README.md"
 
 [features]
-default = ["_integration_tests"]
-_integration_tests = []
+default = ["tokio_fs"]
+
+tokio_fs = ["tokio", "async-compat"]
+async_fs = ["async-fs"]
+
+_integration_tests = ["tokio_fs"]
 
 [dependencies]
+ip2location-bin-format = { version = "0.0", default-features = false, features = ["chrono", "lru"], path = "../ip2location-bin-format" }
+
 serde = { version = "1.0", default_features = false, features = ["std", "derive"] }
 serde-enum-str = { version = "0.2", default-features = false }
 serde-field-with = { version = "0.1.2", default-features = false, features = ["std"] }
-chrono = { version = "0.4", default-features = false }
-async-fs = { version = "1.5", default-features = false }
 futures-util = { version = "0.3", default-features = false, features = ["std", "io"] }
-tokio = { version = "1.17", default-features = false, features = ["fs", "io-util"] }
-lru = { version = "0.7", default-features = false, features = ["hashbrown"] }
+
+tokio = { version = "1.17", default-features = false, features = ["fs"], optional = true }
+async-compat = { version = "0.2", default-features = false, optional = true }
+async-fs = { version = "1.5", default-features = false, optional = true }
 
 [dev-dependencies]
 tokio = { version = "1.17", features = ["macros", "rt"] }
@@ -36,4 +42,7 @@ rand = { version = "0.8" }
 skip_optional_dependencies = true
 denylist = [
     "_integration_tests"
+]
+skip_feature_sets = [
+    ["tokio_fs", "async_fs"],
 ]

@@ -194,3 +194,13 @@ impl TryFrom<u8> for SchemaType {
         }
     }
 }
+
+impl SchemaType {
+    pub fn is_ip2location(&self) -> bool {
+        matches!(self, Self::IP2Location | Self::None)
+    }
+
+    pub fn is_ip2proxy(&self) -> bool {
+        matches!(self, Self::IP2Proxy)
+    }
+}

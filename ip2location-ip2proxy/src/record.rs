@@ -8,25 +8,6 @@ use serde::{de, Deserialize, Deserializer};
 use crate::{proxy_type::ProxyType, usage_type::UsageType};
 
 //
-pub const PX11_CSV_HEADER: &[&str] = &[
-    "ip_from",
-    "ip_to",
-    "proxy_type",
-    "country_code",
-    "country_name",
-    "region_name",
-    "city_name",
-    "isp",
-    "domain",
-    "usage_type",
-    "asn",
-    "as_name",
-    "last_seen",
-    "threat",
-    "provider",
-];
-
-//
 #[derive(Deserialize, Debug, Clone)]
 pub struct Record {
     #[serde(deserialize_with = "ip_deserialize")]
@@ -133,6 +114,135 @@ impl Record {
             threat: Default::default(),
             residential: Default::default(),
             provider: Default::default(),
+        }
+    }
+}
+
+impl
+    TryFrom<(
+        IpAddr,
+        IpAddr,
+        ip2location_bin_format::record_field::RecordFieldContents,
+    )> for Record
+{
+    type Error = Box<str>;
+
+    fn try_from(
+        (ip_from, ip_to, record_field_contents): (
+            IpAddr,
+            IpAddr,
+            ip2location_bin_format::record_field::RecordFieldContents,
+        ),
+    ) -> Result<Self, Self::Error> {
+        use ip2location_bin_format::record_field::RecordFieldContent;
+
+        let mut record = Record::with_empty(ip_from, ip_to);
+
+        for record_field_content in record_field_contents.iter() {
+            match record_field_content {
+                RecordFieldContent::COUNTRY(_, v, v_name) => {
+                    record.country_code = v.parse().expect("unreachable");
+                    record.country_name = Some(v_name.parse().expect("unreachable"));
+                }
+                RecordFieldContent::REGION(_, v) => {
+                    record.region_name = Some(v.parse().expect("unreachable"));
+                }
+                RecordFieldContent::CITY(_, v) => {
+                    record.city_name = Some(v.parse().expect("unreachable"));
+                }
+                RecordFieldContent::LATITUDE(_, _) => {
+                    return Err("Unknown field LATITUDE".into());
+                }
+                RecordFieldContent::LONGITUDE(_, _) => {
+                    return Err("Unknown field LONGITUDE".into());
+                }
+                RecordFieldContent::ZIPCODE(_, _) => {
+                    return Err("Unknown field ZIPCODE".into());
+                }
+                RecordFieldContent::TIMEZONE(_, _) => {
+                    return Err("Unknown field TIMEZONE".into());
+                }
+                RecordFieldContent::PROXYTYPE(_, v) => {
+                    let v = v
+                        .parse::<ProxyType>()
+                        .map_err(|err| Box::<str>::from(err.to_string()))?;
+                    record.proxy_type = Some(v);
+                }
+                RecordFieldContent::ISP(_, v) => {
+                    record.isp = Some(v.parse().expect("unreachable"));
+                }
+                RecordFieldContent::DOMAIN(_, v) => {
+                    record.domain = Some(v.parse().expect("unreachable"));
+                }
+                RecordFieldContent::USAGETYPE(_, v) => {
+                    let v = v
+                        .parse::<UsageType>()
+                        .map_err(|err| Box::<str>::from(err.to_string()))?;
+                    record.usage_type = Some(v);
+                }
+                RecordFieldContent::ASN(_, v) => {
+                    record.asn = Some(v.parse().expect("unreachable"));
+                }
+                RecordFieldContent::AS(_, v) => {
+                    record.as_name = Some(v.parse().expect("unreachable"));
+                }
+                RecordFieldContent::LASTSEEN(_, v) => {
+                    record.last_seen = Some(v.parse().expect("unreachable"));
+                }
+                RecordFieldContent::THREAT(_, v) => {
+                    record.threat = Some(v.parse().expect("unreachable"));
+                }
+                RecordFieldContent::RESIDENTIAL(_, v) => {
+                    record.residential = Some(v.parse().expect("unreachable"));
+                }
+                RecordFieldContent::PROVIDER(_, v) => {
+                    record.provider = Some(v.parse().expect("unreachable"));
+                }
+            }
+        }
+
+        Ok(record)
+    }
+}
+
+//
+//
+//
+#[derive(Debug, Clone, Copy)]
+pub enum RecordField {
+    ProxyType,
+    CountryCode,
+    CountryName,
+    RegionName,
+    CityName,
+    Isp,
+    Domain,
+    UsageType,
+    Asn,
+    AsName,
+    LastSeen,
+    Threat,
+    Provider,
+    Residential,
+}
+
+impl From<&RecordField> for ip2location_bin_format::record_field::RecordField {
+    fn from(x: &RecordField) -> Self {
+        match x {
+            RecordField::ProxyType => Self::PROXYTYPE,
+            RecordField::CountryCode => Self::COUNTRY,
+            RecordField::CountryName => Self::COUNTRY,
+            RecordField::RegionName => Self::REGION,
+            RecordField::CityName => Self::CITY,
+            RecordField::Isp => Self::ISP,
+            RecordField::Domain => Self::DOMAIN,
+            RecordField::UsageType => Self::USAGETYPE,
+            RecordField::Asn => Self::ASN,
+            RecordField::AsName => Self::AS,
+            RecordField::LastSeen => Self::LASTSEEN,
+            RecordField::Threat => Self::THREAT,
+            RecordField::Provider => Self::PROVIDER,
+            RecordField::Residential => Self::RESIDENTIAL,
         }
     }
 }
