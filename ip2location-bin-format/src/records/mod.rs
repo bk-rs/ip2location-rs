@@ -5,6 +5,7 @@ pub mod querier;
 pub use querier::{V4Querier, V6Querier};
 
 //
+#[derive(Debug, Clone, Copy, Default)]
 pub struct PositionRange {
     pub start: u32,
     pub end: u32,

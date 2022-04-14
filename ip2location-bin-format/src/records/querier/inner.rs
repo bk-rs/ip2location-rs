@@ -65,6 +65,10 @@ where
         }
 
         while low <= high {
+            if high == 0 {
+                return Ok(None);
+            }
+
             let mid = (low + high) >> 1;
 
             let seek_from_start = self.seek_from_start_base
