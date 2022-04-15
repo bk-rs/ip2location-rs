@@ -17,6 +17,9 @@ exclude = [
     "/data/**/*.CSV",
 ]
 
+[package.metadata.docs.rs]
+all-features = true
+
 [features]
 default = ["chrono", "lru"]
 
