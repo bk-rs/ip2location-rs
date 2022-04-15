@@ -99,8 +99,32 @@ where
                 }
                 RecordFieldContent::LATITUDE(_) => continue,
                 RecordFieldContent::LONGITUDE(_) => continue,
-                RecordFieldContent::ZIPCODE(i, _) => (*i, 7),
-                RecordFieldContent::TIMEZONE(i, _) => (*i, 6),
+                #[allow(unused_variables)]
+                RecordFieldContent::ZIPCODE(i, v) => {
+                    #[cfg(feature = "lru")]
+                    {
+                        if let Some(value) = self.lru_cache.get(i) {
+                            *v = value.to_owned();
+
+                            continue;
+                        }
+                    }
+
+                    (*i, 8)
+                }
+                #[allow(unused_variables)]
+                RecordFieldContent::TIMEZONE(i, v) => {
+                    #[cfg(feature = "lru")]
+                    {
+                        if let Some(value) = self.lru_cache.get(i) {
+                            *v = value.to_owned();
+
+                            continue;
+                        }
+                    }
+
+                    (*i, 8)
+                }
                 RecordFieldContent::PROXYTYPE(i, v) => {
                     if let Some(value) = self.static_cache.get(i) {
                         *v = value.to_owned();
@@ -224,11 +248,21 @@ where
                     }
                     RecordFieldContent::LATITUDE(_) => {}
                     RecordFieldContent::LONGITUDE(_) => {}
-                    RecordFieldContent::ZIPCODE(_, v) => {
+                    #[allow(unused_variables)]
+                    RecordFieldContent::ZIPCODE(i, v) => {
                         *v = value.to_owned();
+                        #[cfg(feature = "lru")]
+                        {
+                            self.lru_cache.push(*i, value);
+                        }
                     }
-                    RecordFieldContent::TIMEZONE(_, v) => {
+                    #[allow(unused_variables)]
+                    RecordFieldContent::TIMEZONE(i, v) => {
                         *v = value.to_owned();
+                        #[cfg(feature = "lru")]
+                        {
+                            self.lru_cache.push(*i, value);
+                        }
                     }
                     RecordFieldContent::PROXYTYPE(i, v) => {
                         *v = value.to_owned();
