@@ -110,9 +110,14 @@ where
             .await
             .map_err(DatabaseLookupError::QuerierLookupError)?
         {
-            Some(x) => Ok(Some(
-                Record::try_from(x).map_err(DatabaseLookupError::ToRecordFailed)?,
-            )),
+            Some(x) => {
+                let record = Record::try_from(x).map_err(DatabaseLookupError::ToRecordFailed)?;
+                if record.country_code.is_unknown() {
+                    Ok(None)
+                } else {
+                    Ok(Some(record))
+                }
+            }
             None => Ok(None),
         }
     }
@@ -135,9 +140,14 @@ where
             .await
             .map_err(DatabaseLookupError::QuerierLookupError)?
         {
-            Some(x) => Ok(Some(
-                Record::try_from(x).map_err(DatabaseLookupError::ToRecordFailed)?,
-            )),
+            Some(x) => {
+                let record = Record::try_from(x).map_err(DatabaseLookupError::ToRecordFailed)?;
+                if record.country_code.is_unknown() {
+                    Ok(None)
+                } else {
+                    Ok(Some(record))
+                }
+            }
             None => Ok(None),
         }
     }
@@ -205,6 +215,22 @@ mod tests {
                 .await?
                 .unwrap();
             assert_eq!(record_3.country_code.to_string(), "RW");
+
+            //
+            let ret = db.lookup(Ipv4Addr::new(8, 8, 8, 8).into(), None).await?;
+            assert!(ret.is_none());
+
+            // google.com
+            let ret = db
+                .lookup(
+                    "2607:f8b0:4009:817::200e"
+                        .parse::<Ipv6Addr>()
+                        .unwrap()
+                        .into(),
+                    None,
+                )
+                .await?;
+            assert!(ret.is_none());
         }
 
         Ok(())
