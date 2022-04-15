@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 //
 pub mod proxy_type;
 pub mod record;
