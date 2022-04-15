@@ -27,7 +27,7 @@ impl Database<async_compat::Compat<tokio::fs::File>> {
         .await
         .map_err(DatabaseNewError::QuerierNewError)?;
 
-        if !inner.header.r#type.is_ip2proxy() {
+        if !inner.header.r#type.is_ip2location() {
             return Err(DatabaseNewError::TypeMismatch);
         }
 
@@ -44,7 +44,7 @@ impl Database<async_fs::File> {
             .await
             .map_err(DatabaseNewError::QuerierNewError)?;
 
-        if !inner.header.r#type.is_ip2proxy() {
+        if !inner.header.r#type.is_ip2location() {
             return Err(DatabaseNewError::TypeMismatch);
         }
 
@@ -159,45 +159,73 @@ mod tests {
     use std::{error, io::ErrorKind as IoErrorKind};
 
     #[tokio::test]
-    async fn test_new_and_lookup_20220401() -> Result<(), Box<dyn error::Error>> {
-        let path_bin = "data/ip2proxy-lite/20220401/IP2PROXY-LITE-PX11.BIN";
+    async fn test_new_and_lookup_20220329() -> Result<(), Box<dyn error::Error>> {
+        let path_bin_v4 = "data/ip2location-lite/20220329/IP2LOCATION-LITE-DB11.BIN";
+        let path_bin_v6 = "data/ip2location-lite/20220329/IP2LOCATION-LITE-DB11.IPV6.BIN";
 
-        let mut db = match Database::<async_compat::Compat<tokio::fs::File>>::new(path_bin).await {
-            Ok(x) => Some(x),
-            Err(DatabaseNewError::QuerierNewError(QuerierNewError::OpenFailed(err)))
-                if err.kind() == IoErrorKind::NotFound =>
-            {
-                None
-            }
-            Err(err) => panic!("{:?}", err),
-        };
+        let mut db_v4 =
+            match Database::<async_compat::Compat<tokio::fs::File>>::new(path_bin_v4).await {
+                Ok(x) => Some(x),
+                Err(DatabaseNewError::QuerierNewError(QuerierNewError::OpenFailed(err)))
+                    if err.kind() == IoErrorKind::NotFound =>
+                {
+                    None
+                }
+                Err(err) => panic!("{:?}", err),
+            };
+        let mut db_v6 =
+            match Database::<async_compat::Compat<tokio::fs::File>>::new(path_bin_v6).await {
+                Ok(x) => Some(x),
+                Err(DatabaseNewError::QuerierNewError(QuerierNewError::OpenFailed(err)))
+                    if err.kind() == IoErrorKind::NotFound =>
+                {
+                    None
+                }
+                Err(err) => panic!("{:?}", err),
+            };
 
-        if let Some(db) = db.as_mut() {
-            let record_1 = db
-                .lookup(Ipv4Addr::from(16778241).into(), None)
+        if let Some(db_v4) = db_v4.as_mut() {
+            let record_1 = db_v4
+                .lookup(Ipv4Addr::from(16777216).into(), None)
                 .await?
                 .unwrap();
-            assert_eq!(record_1.country_code.to_string(), "AU");
+            assert_eq!(record_1.country_code.to_string(), "US");
+            assert_eq!(record_1.latitude.unwrap(), 34.052_23);
 
-            let selected_fields = &[RecordField::CountryCodeAndName, RecordField::RegionName];
-            let record_2 = db
+            let selected_fields = &[
+                RecordField::CountryCodeAndName,
+                RecordField::RegionName,
+                RecordField::Latitude,
+            ];
+            let record_2 = db_v4
+                .lookup(Ipv4Addr::from(16777472).into(), selected_fields.as_ref())
+                .await?
+                .unwrap();
+            assert_eq!(record_2.country_code.to_string(), "CN");
+            println!("{:?}", record_2);
+        }
+
+        if let Some(db_v6) = db_v6.as_mut() {
+            let record_1 = db_v6
+                .lookup(Ipv6Addr::from(281470698520576).into(), None)
+                .await?
+                .unwrap();
+            assert_eq!(record_1.country_code.to_string(), "US");
+
+            let selected_fields = &[
+                RecordField::CountryCodeAndName,
+                RecordField::RegionName,
+                RecordField::Latitude,
+            ];
+            let record_2 = db_v6
                 .lookup(
-                    Ipv6Addr::from(281470698521601).into(),
+                    Ipv6Addr::from(281470698520832).into(),
                     selected_fields.as_ref(),
                 )
                 .await?
                 .unwrap();
-            assert_eq!(record_2.country_code.to_string(), "AU");
+            assert_eq!(record_2.country_code.to_string(), "CN");
             println!("{:?}", record_2);
-
-            let record_3 = db
-                .lookup(
-                    Ipv6Addr::from(58569071813452613185929873510317667680).into(),
-                    None,
-                )
-                .await?
-                .unwrap();
-            assert_eq!(record_3.country_code.to_string(), "RW");
         }
 
         Ok(())

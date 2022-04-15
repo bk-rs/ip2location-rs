@@ -436,6 +436,20 @@ mod tests {
                 let ret = q.lookup(*ip, None).await?;
                 assert!(ret.is_none());
             }
+
+            if path
+                .as_os_str()
+                .to_str()
+                .map(|x| x.contains("/20220329") && x.contains("IPV6.BIN"))
+                == Some(true)
+            {
+                q.lookup(
+                    Ipv6Addr::from(58569107296622255421594597096899477504).into(),
+                    None,
+                )
+                .await?
+                .unwrap();
+            }
         }
 
         for path in ip2proxy_bin_files().iter() {

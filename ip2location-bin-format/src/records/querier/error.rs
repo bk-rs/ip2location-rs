@@ -6,6 +6,7 @@ use std::io::Error as IoError;
 pub enum Error {
     SeekFailed(IoError),
     ReadFailed(IoError),
+    MaxDepthReached,
 }
 
 impl fmt::Display for Error {

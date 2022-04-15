@@ -128,13 +128,15 @@ where
 
                     let content_index =
                         u32::from_ne_bytes(self.buf[index..index + 4].try_into().unwrap());
+                    let content_value_f32 =
+                        f32::from_ne_bytes(self.buf[index..index + 4].try_into().unwrap());
 
                     match record_field_content {
                         RecordFieldContent::COUNTRY(i, _, _) => *i = content_index,
                         RecordFieldContent::REGION(i, _) => *i = content_index,
                         RecordFieldContent::CITY(i, _) => *i = content_index,
-                        RecordFieldContent::LATITUDE(i, _) => *i = content_index,
-                        RecordFieldContent::LONGITUDE(i, _) => *i = content_index,
+                        RecordFieldContent::LATITUDE(v) => *v = content_value_f32,
+                        RecordFieldContent::LONGITUDE(v) => *v = content_value_f32,
                         RecordFieldContent::ZIPCODE(i, _) => *i = content_index,
                         RecordFieldContent::TIMEZONE(i, _) => *i = content_index,
                         RecordFieldContent::PROXYTYPE(i, _) => *i = content_index,
@@ -174,8 +176,8 @@ where
                 }
             }
 
-            if n_depth > 16 {
-                return Ok(None);
+            if n_depth > 30 {
+                return Err(Error::MaxDepthReached);
             }
 
             n_depth += 1;

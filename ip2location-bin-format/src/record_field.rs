@@ -238,8 +238,8 @@ impl RecordFields {
                 }
                 RecordField::REGION => RecordFieldContent::REGION(0, Default::default()),
                 RecordField::CITY => RecordFieldContent::CITY(0, Default::default()),
-                RecordField::LATITUDE => RecordFieldContent::LATITUDE(0, Default::default()),
-                RecordField::LONGITUDE => RecordFieldContent::LONGITUDE(0, Default::default()),
+                RecordField::LATITUDE => RecordFieldContent::LATITUDE(0.0),
+                RecordField::LONGITUDE => RecordFieldContent::LONGITUDE(0.0),
                 RecordField::ZIPCODE => RecordFieldContent::ZIPCODE(0, Default::default()),
                 RecordField::TIMEZONE => RecordFieldContent::TIMEZONE(0, Default::default()),
                 RecordField::PROXYTYPE => RecordFieldContent::PROXYTYPE(0, Default::default()),
@@ -306,8 +306,8 @@ pub enum RecordFieldContent {
     REGION(u32, Box<str>),
     CITY(u32, Box<str>),
     // IP2Location
-    LATITUDE(u32, Box<str>),
-    LONGITUDE(u32, Box<str>),
+    LATITUDE(f32),
+    LONGITUDE(f32),
     ZIPCODE(u32, Box<str>),
     TIMEZONE(u32, Box<str>),
     // IP2Proxy
@@ -346,8 +346,8 @@ impl RecordFieldContents {
             RecordFieldContent::COUNTRY(_, _, _) => record_fields.contains(&RecordField::COUNTRY),
             RecordFieldContent::REGION(_, _) => record_fields.contains(&RecordField::REGION),
             RecordFieldContent::CITY(_, _) => record_fields.contains(&RecordField::CITY),
-            RecordFieldContent::LATITUDE(_, _) => record_fields.contains(&RecordField::LATITUDE),
-            RecordFieldContent::LONGITUDE(_, _) => record_fields.contains(&RecordField::LONGITUDE),
+            RecordFieldContent::LATITUDE(_) => record_fields.contains(&RecordField::LATITUDE),
+            RecordFieldContent::LONGITUDE(_) => record_fields.contains(&RecordField::LONGITUDE),
             RecordFieldContent::ZIPCODE(_, _) => record_fields.contains(&RecordField::ZIPCODE),
             RecordFieldContent::TIMEZONE(_, _) => record_fields.contains(&RecordField::TIMEZONE),
             RecordFieldContent::PROXYTYPE(_, _) => record_fields.contains(&RecordField::PROXYTYPE),

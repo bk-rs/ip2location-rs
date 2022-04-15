@@ -1,11 +1,9 @@
-//! [Ref](https://lite.ip2location.com/database/px11-ip-proxytype-country-region-city-isp-domain-usagetype-asn-lastseen-threat-residential-provider#database-fields)
+//! [Ref](https://lite.ip2location.com/database/db11-ip-country-region-city-latitude-longitude-zipcode-timezone#database-fields)
 
 use core::{convert::Infallible, fmt, str::FromStr};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 use serde::{de, Deserialize, Deserializer};
-
-use crate::{proxy_type::ProxyType, usage_type::UsageType};
 
 //
 #[derive(Deserialize, Debug, Clone)]
@@ -14,7 +12,6 @@ pub struct Record {
     pub ip_from: IpAddr,
     #[serde(deserialize_with = "ip_deserialize")]
     pub ip_to: IpAddr,
-    pub proxy_type: Option<ProxyType>,
     #[serde(with = "serde_field_with::to_and_from_string")]
     pub country_code: RecordValue,
     #[serde(default, with = "serde_field_with::to_and_from_string_option")]
@@ -23,23 +20,12 @@ pub struct Record {
     pub region_name: Option<RecordValue>,
     #[serde(default, with = "serde_field_with::to_and_from_string_option")]
     pub city_name: Option<RecordValue>,
+    pub latitude: Option<f32>,
+    pub longitude: Option<f32>,
     #[serde(default, with = "serde_field_with::to_and_from_string_option")]
-    pub isp: Option<RecordValue>,
+    pub zip_code: Option<RecordValue>,
     #[serde(default, with = "serde_field_with::to_and_from_string_option")]
-    pub domain: Option<RecordValue>,
-    pub usage_type: Option<UsageType>,
-    #[serde(default, with = "serde_field_with::to_and_from_string_option")]
-    pub asn: Option<RecordValue>,
-    #[serde(default, with = "serde_field_with::to_and_from_string_option")]
-    pub as_name: Option<RecordValue>,
-    #[serde(default, with = "serde_field_with::to_and_from_string_option")]
-    pub last_seen: Option<RecordValue>,
-    #[serde(default, with = "serde_field_with::to_and_from_string_option")]
-    pub threat: Option<RecordValue>,
-    #[serde(default, with = "serde_field_with::to_and_from_string_option")]
-    pub provider: Option<RecordValue>,
-    #[serde(default, with = "serde_field_with::to_and_from_string_option")]
-    pub residential: Option<RecordValue>,
+    pub time_zone: Option<RecordValue>,
 }
 
 fn ip_deserialize<'de, D>(deserializer: D) -> Result<IpAddr, D::Error>
@@ -63,7 +49,6 @@ where
 #[derive(Debug, Clone, PartialEq)]
 pub enum RecordValue {
     String(Box<str>),
-    Usize(usize),
     Unknown,
 }
 
@@ -79,8 +64,6 @@ impl FromStr for RecordValue {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s == "-" {
             Ok(Self::Unknown)
-        } else if let Ok(v) = s.parse::<usize>() {
-            Ok(Self::Usize(v))
         } else {
             Ok(Self::String(s.into()))
         }
@@ -91,7 +74,6 @@ impl fmt::Display for RecordValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             RecordValue::String(s) => write!(f, "{}", s),
-            RecordValue::Usize(v) => write!(f, "{}", v),
             RecordValue::Unknown => write!(f, "-"),
         }
     }
@@ -108,20 +90,14 @@ impl Record {
         Self {
             ip_from,
             ip_to,
-            proxy_type: Default::default(),
             country_code: Default::default(),
             country_name: Default::default(),
             region_name: Default::default(),
             city_name: Default::default(),
-            isp: Default::default(),
-            domain: Default::default(),
-            usage_type: Default::default(),
-            asn: Default::default(),
-            as_name: Default::default(),
-            last_seen: Default::default(),
-            threat: Default::default(),
-            residential: Default::default(),
-            provider: Default::default(),
+            latitude: Default::default(),
+            longitude: Default::default(),
+            zip_code: Default::default(),
+            time_zone: Default::default(),
         }
     }
 }
@@ -158,53 +134,47 @@ impl
                 RecordFieldContent::CITY(_, v) => {
                     record.city_name = Some(v.parse().expect("unreachable"));
                 }
-                RecordFieldContent::LATITUDE(_) => {
-                    return Err("Unknown field LATITUDE".into());
+                RecordFieldContent::LATITUDE(v) => {
+                    record.latitude = Some(*v);
                 }
-                RecordFieldContent::LONGITUDE(_) => {
-                    return Err("Unknown field LONGITUDE".into());
+                RecordFieldContent::LONGITUDE(v) => {
+                    record.longitude = Some(*v);
                 }
-                RecordFieldContent::ZIPCODE(_, _) => {
-                    return Err("Unknown field ZIPCODE".into());
+                RecordFieldContent::ZIPCODE(_, v) => {
+                    record.zip_code = Some(v.parse().expect("unreachable"));
                 }
-                RecordFieldContent::TIMEZONE(_, _) => {
-                    return Err("Unknown field TIMEZONE".into());
+                RecordFieldContent::TIMEZONE(_, v) => {
+                    record.time_zone = Some(v.parse().expect("unreachable"));
                 }
-                RecordFieldContent::PROXYTYPE(_, v) => {
-                    let v = v
-                        .parse::<ProxyType>()
-                        .map_err(|err| Box::<str>::from(err.to_string()))?;
-                    record.proxy_type = Some(v);
+                RecordFieldContent::PROXYTYPE(_, _) => {
+                    return Err("Unknown field PROXYTYPE".into());
                 }
-                RecordFieldContent::ISP(_, v) => {
-                    record.isp = Some(v.parse().expect("unreachable"));
+                RecordFieldContent::ISP(_, _) => {
+                    return Err("Unknown field ISP".into());
                 }
-                RecordFieldContent::DOMAIN(_, v) => {
-                    record.domain = Some(v.parse().expect("unreachable"));
+                RecordFieldContent::DOMAIN(_, _) => {
+                    return Err("Unknown field DOMAIN".into());
                 }
-                RecordFieldContent::USAGETYPE(_, v) => {
-                    let v = v
-                        .parse::<UsageType>()
-                        .map_err(|err| Box::<str>::from(err.to_string()))?;
-                    record.usage_type = Some(v);
+                RecordFieldContent::USAGETYPE(_, _) => {
+                    return Err("Unknown field USAGETYPE".into());
                 }
-                RecordFieldContent::ASN(_, v) => {
-                    record.asn = Some(v.parse().expect("unreachable"));
+                RecordFieldContent::ASN(_, _) => {
+                    return Err("Unknown field ASN".into());
                 }
-                RecordFieldContent::AS(_, v) => {
-                    record.as_name = Some(v.parse().expect("unreachable"));
+                RecordFieldContent::AS(_, _) => {
+                    return Err("Unknown field AS".into());
                 }
-                RecordFieldContent::LASTSEEN(_, v) => {
-                    record.last_seen = Some(v.parse().expect("unreachable"));
+                RecordFieldContent::LASTSEEN(_, _) => {
+                    return Err("Unknown field LASTSEEN".into());
                 }
-                RecordFieldContent::THREAT(_, v) => {
-                    record.threat = Some(v.parse().expect("unreachable"));
+                RecordFieldContent::THREAT(_, _) => {
+                    return Err("Unknown field THREAT".into());
                 }
-                RecordFieldContent::RESIDENTIAL(_, v) => {
-                    record.residential = Some(v.parse().expect("unreachable"));
+                RecordFieldContent::RESIDENTIAL(_, _) => {
+                    return Err("Unknown field RESIDENTIAL".into());
                 }
-                RecordFieldContent::PROVIDER(_, v) => {
-                    record.provider = Some(v.parse().expect("unreachable"));
+                RecordFieldContent::PROVIDER(_, _) => {
+                    return Err("Unknown field PROVIDER".into());
                 }
             }
         }
@@ -218,37 +188,25 @@ impl
 //
 #[derive(Debug, Clone, Copy)]
 pub enum RecordField {
-    ProxyType,
     CountryCodeAndName,
     RegionName,
     CityName,
-    Isp,
-    Domain,
-    UsageType,
-    Asn,
-    AsName,
-    LastSeen,
-    Threat,
-    Provider,
-    Residential,
+    Latitude,
+    Longitude,
+    ZipCode,
+    TimeZone,
 }
 
 impl From<&RecordField> for ip2location_bin_format::record_field::RecordField {
     fn from(x: &RecordField) -> Self {
         match x {
-            RecordField::ProxyType => Self::PROXYTYPE,
             RecordField::CountryCodeAndName => Self::COUNTRY,
             RecordField::RegionName => Self::REGION,
             RecordField::CityName => Self::CITY,
-            RecordField::Isp => Self::ISP,
-            RecordField::Domain => Self::DOMAIN,
-            RecordField::UsageType => Self::USAGETYPE,
-            RecordField::Asn => Self::ASN,
-            RecordField::AsName => Self::AS,
-            RecordField::LastSeen => Self::LASTSEEN,
-            RecordField::Threat => Self::THREAT,
-            RecordField::Provider => Self::PROVIDER,
-            RecordField::Residential => Self::RESIDENTIAL,
+            RecordField::Latitude => Self::LATITUDE,
+            RecordField::Longitude => Self::LONGITUDE,
+            RecordField::ZipCode => Self::ZIPCODE,
+            RecordField::TimeZone => Self::TIMEZONE,
         }
     }
 }

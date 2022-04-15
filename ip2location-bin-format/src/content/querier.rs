@@ -54,7 +54,7 @@ where
     ) -> Result<(), FillError> {
         for record_field_content in record_field_contents.iter_mut() {
             //
-            let (seek_from_start, len_estimatable) = match record_field_content {
+            let (data_seek_from_start, data_len_estimatable) = match record_field_content {
                 RecordFieldContent::COUNTRY(i, v, v_name) => {
                     if let Some(value) = self.static_cache.get(i) {
                         *v = value.to_owned();
@@ -97,8 +97,8 @@ where
 
                     (*i, 20)
                 }
-                RecordFieldContent::LATITUDE(i, _) => (*i, 11),
-                RecordFieldContent::LONGITUDE(i, _) => (*i, 11),
+                RecordFieldContent::LATITUDE(_) => continue,
+                RecordFieldContent::LONGITUDE(_) => continue,
                 RecordFieldContent::ZIPCODE(i, _) => (*i, 7),
                 RecordFieldContent::TIMEZONE(i, _) => (*i, 6),
                 RecordFieldContent::PROXYTYPE(i, v) => {
@@ -134,7 +134,7 @@ where
             //
             // https://github.com/ip2location/ip2proxy-rust/blob/5bdd3ef61c2e243c1b61eda1475ca23eab2b7240/src/db.rs#L416
             self.stream
-                .seek(SeekFrom::Start(seek_from_start as u64))
+                .seek(SeekFrom::Start(data_seek_from_start as u64))
                 .await
                 .map_err(FillError::SeekFailed)?;
 
@@ -144,7 +144,7 @@ where
             //
             let n = self
                 .stream
-                .read(&mut self.buf[..len_estimatable + 1])
+                .read(&mut self.buf[..data_len_estimatable + 1])
                 .await
                 .map_err(FillError::ReadFailed)?;
             n_read += n;
@@ -222,12 +222,8 @@ where
                             self.lru_cache.push(*i, value);
                         }
                     }
-                    RecordFieldContent::LATITUDE(_, v) => {
-                        *v = value.to_owned();
-                    }
-                    RecordFieldContent::LONGITUDE(_, v) => {
-                        *v = value.to_owned();
-                    }
+                    RecordFieldContent::LATITUDE(_) => {}
+                    RecordFieldContent::LONGITUDE(_) => {}
                     RecordFieldContent::ZIPCODE(_, v) => {
                         *v = value.to_owned();
                     }
