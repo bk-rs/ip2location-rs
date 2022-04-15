@@ -14,15 +14,13 @@ async fn test_px11() -> Result<(), Box<dyn error::Error>> {
     let path_bin = "data/ip2proxy-lite/20220401/IP2PROXY-LITE-PX11.BIN";
 
     //
-    let mut rdr_v4 = ReaderBuilder::new()
+    let mut csv_rdr_v4 = ReaderBuilder::new()
         .has_headers(false)
         .from_reader(File::open(path_csv_v4)?);
-    let iter_v4 = rdr_v4.records();
 
-    let mut rdr_v6 = ReaderBuilder::new()
+    let mut csv_rdr_v6 = ReaderBuilder::new()
         .has_headers(false)
         .from_reader(File::open(path_csv_v6)?);
-    let iter_v6 = rdr_v6.records();
 
     let header = StringRecord::from(CSV_HEADER_PX11);
 
@@ -32,7 +30,7 @@ async fn test_px11() -> Result<(), Box<dyn error::Error>> {
 
     //
     let mut count_v4 = 0;
-    for (i, record) in iter_v4.enumerate() {
+    for (i, record) in csv_rdr_v4.records().enumerate() {
         if i % 100000 == 0 {
             println!("v4 i:{}", i)
         }
@@ -68,7 +66,7 @@ async fn test_px11() -> Result<(), Box<dyn error::Error>> {
 
     //
     let mut count_v6 = 0;
-    for (i, record) in iter_v6.enumerate() {
+    for (i, record) in csv_rdr_v6.records().enumerate() {
         if i % 100000 == 0 {
             println!("v6 i:{}", i)
         }
