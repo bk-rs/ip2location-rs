@@ -281,7 +281,7 @@ where
     pub async fn lookup(
         &mut self,
         ip: IpAddr,
-        selected_fields: impl Into<Option<&[RecordField]>>,
+        selected_fields: Option<&[RecordField]>,
     ) -> Result<Option<(IpAddr, IpAddr, RecordFieldContents)>, LookupError> {
         match ip {
             IpAddr::V4(ip) => self.lookup_ipv4(ip, selected_fields).await,
@@ -292,7 +292,7 @@ where
     pub async fn lookup_ipv4(
         &mut self,
         ip: Ipv4Addr,
-        selected_fields: impl Into<Option<&[RecordField]>>,
+        selected_fields: Option<&[RecordField]>,
     ) -> Result<Option<(IpAddr, IpAddr, RecordFieldContents)>, LookupError> {
         let position_range = self.index_v4.query(ip);
 
@@ -310,7 +310,7 @@ where
             None => return Ok(None),
         };
 
-        if let Some(selected_fields) = selected_fields.into() {
+        if let Some(selected_fields) = selected_fields {
             record_field_contents.select(selected_fields);
         }
 
@@ -325,10 +325,30 @@ where
     pub async fn lookup_ipv6(
         &mut self,
         ip: Ipv6Addr,
-        selected_fields: impl Into<Option<&[RecordField]>>,
+        selected_fields: Option<&[RecordField]>,
     ) -> Result<Option<(IpAddr, IpAddr, RecordFieldContents)>, LookupError> {
         if let Some(ip) = ip.to_ipv4() {
-            return self.lookup_ipv4(ip, selected_fields).await;
+            return self.lookup_ipv4(ip, selected_fields).await.map(|x| {
+                x.map(|(ip_from, ip_to, record_field_contents)| {
+                    (
+                        match ip_from {
+                            IpAddr::V4(ip) => ip.to_ipv6_mapped().into(),
+                            IpAddr::V6(ip) => {
+                                debug_assert!(false, "unreachable");
+                                ip.into()
+                            }
+                        },
+                        match ip_to {
+                            IpAddr::V4(ip) => ip.to_ipv6_mapped().into(),
+                            IpAddr::V6(ip) => {
+                                debug_assert!(false, "unreachable");
+                                ip.into()
+                            }
+                        },
+                        record_field_contents,
+                    )
+                })
+            });
         }
 
         let position_range = self
@@ -355,7 +375,7 @@ where
             None => return Ok(None),
         };
 
-        if let Some(selected_fields) = selected_fields.into() {
+        if let Some(selected_fields) = selected_fields {
             record_field_contents.select(selected_fields);
         }
 
@@ -429,13 +449,12 @@ mod tests {
             }
 
             if path.as_os_str().to_str().map(|x| x.contains("/20220401")) == Some(true) {
-                let ret = q
-                    .lookup(
-                        Ipv6Addr::from(58569071813452613185929873510317667680).into(),
-                        None,
-                    )
-                    .await?;
-                println!("{:?}", ret)
+                q.lookup(
+                    Ipv6Addr::from(58569071813452613185929873510317667680).into(),
+                    None,
+                )
+                .await?
+                .unwrap();
             }
         }
 

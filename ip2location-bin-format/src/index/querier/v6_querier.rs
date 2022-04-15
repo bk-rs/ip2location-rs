@@ -28,6 +28,8 @@ impl V6Querier {
 
     //
     pub fn query(&self, ip: Ipv6Addr) -> PositionRange {
+        debug_assert!(ip.to_ipv4().is_none());
+
         let position = ipv6_addr_position(ip) as usize;
 
         let start = u32::from_ne_bytes(

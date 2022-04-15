@@ -150,3 +150,54 @@ impl fmt::Display for DatabaseLookupError {
 }
 
 impl std::error::Error for DatabaseLookupError {}
+
+#[cfg(feature = "tokio_fs")]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use std::{error, io::ErrorKind as IoErrorKind};
+
+    #[tokio::test]
+    async fn test_new_and_lookup() -> Result<(), Box<dyn error::Error>> {
+        let path_bin = "data/ip2proxy-lite/20220401/IP2PROXY-LITE-PX11.BIN";
+
+        let mut db = match Database::<async_compat::Compat<tokio::fs::File>>::new(path_bin).await {
+            Ok(q) => q,
+            Err(DatabaseNewError::QuerierNewError(QuerierNewError::OpenFailed(err)))
+                if err.kind() == IoErrorKind::NotFound =>
+            {
+                return Ok(())
+            }
+            Err(err) => panic!("{:?}", err),
+        };
+
+        let record_1 = db
+            .lookup(Ipv4Addr::from(16778241).into(), None)
+            .await?
+            .unwrap();
+        assert_eq!(record_1.country_code.to_string(), "AU");
+
+        let selected_fields = &[RecordField::CountryCodeAndName, RecordField::RegionName];
+        let record_2 = db
+            .lookup(
+                Ipv6Addr::from(281470698521601).into(),
+                selected_fields.as_ref(),
+            )
+            .await?
+            .unwrap();
+        assert_eq!(record_2.country_code.to_string(), "AU");
+        println!("{:?}", record_2);
+
+        let record_3 = db
+            .lookup(
+                Ipv6Addr::from(58569071813452613185929873510317667680).into(),
+                None,
+            )
+            .await?
+            .unwrap();
+        assert_eq!(record_3.country_code.to_string(), "RW");
+
+        Ok(())
+    }
+}

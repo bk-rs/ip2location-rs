@@ -26,3 +26,6 @@ tokio = { version = "1.17", features = ["macros", "rt", "fs"] }
 async-compat = { version = "0.2" }
 
 walkdir = { version = "2.3" }
+
+[package.metadata.cargo-all-features]
+skip_optional_dependencies = true
