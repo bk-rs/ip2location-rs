@@ -1,3 +1,10 @@
+//
+#[cfg(feature = "tokio_fs")]
+pub type TokioFile = async_compat::Compat<tokio::fs::File>;
+
+#[cfg(feature = "async_fs")]
+pub type AsyncFsFile = async_fs::File;
+
 use core::fmt;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
@@ -163,26 +170,24 @@ mod tests {
         let path_bin_v4 = "data/ip2location-lite/20220329/IP2LOCATION-LITE-DB11.BIN";
         let path_bin_v6 = "data/ip2location-lite/20220329/IP2LOCATION-LITE-DB11.IPV6.BIN";
 
-        let mut db_v4 =
-            match Database::<async_compat::Compat<tokio::fs::File>>::new(path_bin_v4).await {
-                Ok(x) => Some(x),
-                Err(DatabaseNewError::QuerierNewError(QuerierNewError::OpenFailed(err)))
-                    if err.kind() == IoErrorKind::NotFound =>
-                {
-                    None
-                }
-                Err(err) => panic!("{:?}", err),
-            };
-        let mut db_v6 =
-            match Database::<async_compat::Compat<tokio::fs::File>>::new(path_bin_v6).await {
-                Ok(x) => Some(x),
-                Err(DatabaseNewError::QuerierNewError(QuerierNewError::OpenFailed(err)))
-                    if err.kind() == IoErrorKind::NotFound =>
-                {
-                    None
-                }
-                Err(err) => panic!("{:?}", err),
-            };
+        let mut db_v4 = match Database::<TokioFile>::new(path_bin_v4).await {
+            Ok(x) => Some(x),
+            Err(DatabaseNewError::QuerierNewError(QuerierNewError::OpenFailed(err)))
+                if err.kind() == IoErrorKind::NotFound =>
+            {
+                None
+            }
+            Err(err) => panic!("{:?}", err),
+        };
+        let mut db_v6 = match Database::<TokioFile>::new(path_bin_v6).await {
+            Ok(x) => Some(x),
+            Err(DatabaseNewError::QuerierNewError(QuerierNewError::OpenFailed(err)))
+                if err.kind() == IoErrorKind::NotFound =>
+            {
+                None
+            }
+            Err(err) => panic!("{:?}", err),
+        };
 
         if let Some(db_v4) = db_v4.as_mut() {
             let record_1 = db_v4

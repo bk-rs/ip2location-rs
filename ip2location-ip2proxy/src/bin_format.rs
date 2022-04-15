@@ -1,3 +1,10 @@
+//
+#[cfg(feature = "tokio_fs")]
+pub type TokioFile = async_compat::Compat<tokio::fs::File>;
+
+#[cfg(feature = "async_fs")]
+pub type AsyncFsFile = async_fs::File;
+
 use core::fmt;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
@@ -162,7 +169,7 @@ mod tests {
     async fn test_new_and_lookup_20220401() -> Result<(), Box<dyn error::Error>> {
         let path_bin = "data/ip2proxy-lite/20220401/IP2PROXY-LITE-PX11.BIN";
 
-        let mut db = match Database::<async_compat::Compat<tokio::fs::File>>::new(path_bin).await {
+        let mut db = match Database::<TokioFile>::new(path_bin).await {
             Ok(x) => Some(x),
             Err(DatabaseNewError::QuerierNewError(QuerierNewError::OpenFailed(err)))
                 if err.kind() == IoErrorKind::NotFound =>

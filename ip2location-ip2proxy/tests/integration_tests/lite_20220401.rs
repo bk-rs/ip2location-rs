@@ -1,7 +1,11 @@
 use std::{error, fs::File, net::IpAddr};
 
 use csv::{ReaderBuilder, StringRecord};
-use ip2location_ip2proxy::{bin_format::Database, csv_format::CSV_HEADER_PX11, record::Record};
+use ip2location_ip2proxy::{
+    bin_format::{Database, TokioFile},
+    csv_format::CSV_HEADER_PX11,
+    record::Record,
+};
 
 #[tokio::test]
 async fn test_px11() -> Result<(), Box<dyn error::Error>> {
@@ -23,7 +27,7 @@ async fn test_px11() -> Result<(), Box<dyn error::Error>> {
     let header = StringRecord::from(CSV_HEADER_PX11);
 
     //
-    let mut db = Database::<async_compat::Compat<tokio::fs::File>>::new(path_bin).await?;
+    let mut db = Database::<TokioFile>::new(path_bin).await?;
     println!("{:?}", db.inner.header);
 
     //
