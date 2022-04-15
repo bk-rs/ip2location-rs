@@ -1,6 +1,6 @@
 [package]
 name = "ip2location-ip2proxy"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["vkill <vkill.net@gmail.com>"]
 edition = "2021"
 description = "IP2Proxy™ Proxy Detection Database"
