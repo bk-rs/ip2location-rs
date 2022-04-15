@@ -1,6 +1,6 @@
 [package]
 name = "ip2location-iso3166-2"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["vkill <vkill.net@gmail.com>"]
 edition = "2021"
 description = "IP2Location™ ISO 3166-2 Subdivision Code"
