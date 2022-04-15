@@ -9,14 +9,24 @@ use crate::header::schema::{SchemaSubType, SchemaType};
 pub const RECORD_FIELD_LEN_WITHOUT_IP: u32 = 4;
 
 //
-pub const RECORD_FIELDS_DBN_LIST: &[u8] = &[1, 3, 5, 9, 11];
+// TODO,  12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25
+pub const RECORD_FIELDS_DBN_LIST: &[u8] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
 pub const RECORD_FIELDS_DB1: &[RecordField] = &[RecordField::IP, RecordField::COUNTRY];
+pub const RECORD_FIELDS_DB2: &[RecordField] =
+    &[RecordField::IP, RecordField::COUNTRY, RecordField::ISP];
 pub const RECORD_FIELDS_DB3: &[RecordField] = &[
     RecordField::IP,
     RecordField::COUNTRY,
     RecordField::REGION,
     RecordField::CITY,
+];
+pub const RECORD_FIELDS_DB4: &[RecordField] = &[
+    RecordField::IP,
+    RecordField::COUNTRY,
+    RecordField::REGION,
+    RecordField::CITY,
+    RecordField::ISP,
 ];
 pub const RECORD_FIELDS_DB5: &[RecordField] = &[
     RecordField::IP,
@@ -26,6 +36,33 @@ pub const RECORD_FIELDS_DB5: &[RecordField] = &[
     RecordField::LATITUDE,
     RecordField::LONGITUDE,
 ];
+pub const RECORD_FIELDS_DB6: &[RecordField] = &[
+    RecordField::IP,
+    RecordField::COUNTRY,
+    RecordField::REGION,
+    RecordField::CITY,
+    RecordField::LATITUDE,
+    RecordField::LONGITUDE,
+    RecordField::ISP,
+];
+pub const RECORD_FIELDS_DB7: &[RecordField] = &[
+    RecordField::IP,
+    RecordField::COUNTRY,
+    RecordField::REGION,
+    RecordField::CITY,
+    RecordField::ISP,
+    RecordField::DOMAIN,
+];
+pub const RECORD_FIELDS_DB8: &[RecordField] = &[
+    RecordField::IP,
+    RecordField::COUNTRY,
+    RecordField::REGION,
+    RecordField::CITY,
+    RecordField::LATITUDE,
+    RecordField::LONGITUDE,
+    RecordField::ISP,
+    RecordField::DOMAIN,
+];
 pub const RECORD_FIELDS_DB9: &[RecordField] = &[
     RecordField::IP,
     RecordField::COUNTRY,
@@ -34,6 +71,17 @@ pub const RECORD_FIELDS_DB9: &[RecordField] = &[
     RecordField::LATITUDE,
     RecordField::LONGITUDE,
     RecordField::ZIPCODE,
+];
+pub const RECORD_FIELDS_DB10: &[RecordField] = &[
+    RecordField::IP,
+    RecordField::COUNTRY,
+    RecordField::REGION,
+    RecordField::CITY,
+    RecordField::LATITUDE,
+    RecordField::LONGITUDE,
+    RecordField::ZIPCODE,
+    RecordField::ISP,
+    RecordField::DOMAIN,
 ];
 pub const RECORD_FIELDS_DB11: &[RecordField] = &[
     RecordField::IP,
@@ -45,6 +93,8 @@ pub const RECORD_FIELDS_DB11: &[RecordField] = &[
     RecordField::ZIPCODE,
     RecordField::TIMEZONE,
 ];
+
+// TODO, RECORD_FIELDS_DB12 - RECORD_FIELDS_DB25
 
 //
 pub const RECORD_FIELDS_PXN_LIST: &[u8] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
@@ -176,6 +226,8 @@ pub enum RecordField {
     COUNTRY,
     REGION,
     CITY,
+    ISP,
+    DOMAIN,
     // IP2Location
     LATITUDE,
     LONGITUDE,
@@ -183,8 +235,6 @@ pub enum RecordField {
     TIMEZONE,
     // IP2Proxy
     PROXYTYPE,
-    ISP,
-    DOMAIN,
     USAGETYPE,
     ASN,
     AS,
@@ -274,9 +324,15 @@ impl TryFrom<(SchemaType, SchemaSubType)> for RecordFields {
         match r#type {
             SchemaType::IP2Location | SchemaType::None => match sub_type.0 {
                 1 => Ok(Self(RECORD_FIELDS_DB1.to_owned())),
+                2 => Ok(Self(RECORD_FIELDS_DB2.to_owned())),
                 3 => Ok(Self(RECORD_FIELDS_DB3.to_owned())),
+                4 => Ok(Self(RECORD_FIELDS_DB4.to_owned())),
                 5 => Ok(Self(RECORD_FIELDS_DB5.to_owned())),
+                6 => Ok(Self(RECORD_FIELDS_DB6.to_owned())),
+                7 => Ok(Self(RECORD_FIELDS_DB7.to_owned())),
+                8 => Ok(Self(RECORD_FIELDS_DB8.to_owned())),
                 9 => Ok(Self(RECORD_FIELDS_DB9.to_owned())),
+                10 => Ok(Self(RECORD_FIELDS_DB10.to_owned())),
                 11 => Ok(Self(RECORD_FIELDS_DB11.to_owned())),
                 _ => Err(sub_type),
             },

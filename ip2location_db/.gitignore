@@ -2,6 +2,12 @@
 /ip2location-lite/**/*.CSV
 /ip2location-lite/**/*.BIN
 
+/ip2location-sample/**/*.zip
+/ip2location-sample/**/*.BIN
+
 /ip2proxy-lite/**/*.ZIP
 /ip2proxy-lite/**/*.CSV
 /ip2proxy-lite/**/*.BIN
+
+/ip2proxy-sample/**/*.zip
+/ip2proxy-sample/**/*.BIN

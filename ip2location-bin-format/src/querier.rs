@@ -450,6 +450,16 @@ mod tests {
                 .await?
                 .unwrap();
             }
+
+            if path
+                .as_os_str()
+                .to_str()
+                .map(|x| x.contains("/ip2location-sample") && x.contains("/IP-"))
+                == Some(true)
+            {
+                let ret = q.lookup(Ipv4Addr::new(8, 8, 8, 8).into(), None).await?;
+                assert!(ret.is_some());
+            }
         }
 
         for path in ip2proxy_bin_files().iter() {

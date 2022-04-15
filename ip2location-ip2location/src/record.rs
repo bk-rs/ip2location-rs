@@ -26,6 +26,10 @@ pub struct Record {
     pub zip_code: Option<RecordValue>,
     #[serde(default, with = "serde_field_with::to_and_from_string_option")]
     pub time_zone: Option<RecordValue>,
+    #[serde(default, with = "serde_field_with::to_and_from_string_option")]
+    pub isp: Option<RecordValue>,
+    #[serde(default, with = "serde_field_with::to_and_from_string_option")]
+    pub domain: Option<RecordValue>,
 }
 
 fn ip_deserialize<'de, D>(deserializer: D) -> Result<IpAddr, D::Error>
@@ -98,6 +102,8 @@ impl Record {
             longitude: Default::default(),
             zip_code: Default::default(),
             time_zone: Default::default(),
+            isp: Default::default(),
+            domain: Default::default(),
         }
     }
 }
@@ -149,11 +155,11 @@ impl
                 RecordFieldContent::PROXYTYPE(_, _) => {
                     return Err("Unknown field PROXYTYPE".into());
                 }
-                RecordFieldContent::ISP(_, _) => {
-                    return Err("Unknown field ISP".into());
+                RecordFieldContent::ISP(_, v) => {
+                    record.isp = Some(v.parse().expect("unreachable"));
                 }
-                RecordFieldContent::DOMAIN(_, _) => {
-                    return Err("Unknown field DOMAIN".into());
+                RecordFieldContent::DOMAIN(_, v) => {
+                    record.domain = Some(v.parse().expect("unreachable"));
                 }
                 RecordFieldContent::USAGETYPE(_, _) => {
                     return Err("Unknown field USAGETYPE".into());
@@ -195,6 +201,8 @@ pub enum RecordField {
     Longitude,
     ZipCode,
     TimeZone,
+    Isp,
+    Domain,
 }
 
 impl From<&RecordField> for ip2location_bin_format::record_field::RecordField {
@@ -207,6 +215,8 @@ impl From<&RecordField> for ip2location_bin_format::record_field::RecordField {
             RecordField::Longitude => Self::LONGITUDE,
             RecordField::ZipCode => Self::ZIPCODE,
             RecordField::TimeZone => Self::TIMEZONE,
+            RecordField::Isp => Self::ISP,
+            RecordField::Domain => Self::DOMAIN,
         }
     }
 }
