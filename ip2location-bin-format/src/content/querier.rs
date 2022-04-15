@@ -36,7 +36,7 @@ impl<S> Querier<S> {
             },
             static_cache: BTreeMap::default(),
             #[cfg(feature = "lru")]
-            lru_cache: lru::LruCache::new(1000),
+            lru_cache: lru::LruCache::new(10000),
         }
     }
 }
@@ -54,7 +54,7 @@ where
     ) -> Result<(), FillError> {
         for record_field_content in record_field_contents.iter_mut() {
             //
-            let (data_seek_from_start, data_len_estimatable) = match record_field_content {
+            let (seek_from_start, len_estimatable) = match record_field_content {
                 RecordFieldContent::COUNTRY(i, v, v_name) => {
                     if let Some(value) = self.static_cache.get(i) {
                         *v = value.to_owned();
@@ -158,7 +158,7 @@ where
             //
             // https://github.com/ip2location/ip2proxy-rust/blob/5bdd3ef61c2e243c1b61eda1475ca23eab2b7240/src/db.rs#L416
             self.stream
-                .seek(SeekFrom::Start(data_seek_from_start as u64))
+                .seek(SeekFrom::Start(seek_from_start as u64))
                 .await
                 .map_err(FillError::SeekFailed)?;
 
@@ -168,7 +168,7 @@ where
             //
             let n = self
                 .stream
-                .read(&mut self.buf[..data_len_estimatable + 1])
+                .read(&mut self.buf[..len_estimatable + 1])
                 .await
                 .map_err(FillError::ReadFailed)?;
             n_read += n;
