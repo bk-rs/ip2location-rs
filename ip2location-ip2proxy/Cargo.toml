@@ -1,6 +1,6 @@
 [package]
 name = "ip2location-ip2proxy"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["vkill <vkill.net@gmail.com>"]
 edition = "2021"
 description = "IP2Proxy™ Proxy Detection Database"
@@ -11,6 +11,11 @@ documentation = "https://docs.rs/ip2location-ip2proxy"
 keywords = []
 categories = []
 readme = "README.md"
+exclude = [
+    "/data/**/*.BIN",
+    "/data/**/*.ZIP",
+    "/data/**/*.CSV",
+]
 
 [features]
 default = ["tokio_fs"]
@@ -21,7 +26,7 @@ async_fs = ["async-fs"]
 _integration_tests = ["tokio_fs"]
 
 [dependencies]
-ip2location-bin-format = { version = "0.0", default-features = false, features = ["chrono", "lru"], path = "../ip2location-bin-format" }
+ip2location-bin-format = { version = "0.1", default-features = false, features = ["chrono", "lru"], path = "../ip2location-bin-format" }
 
 serde = { version = "1.0", default_features = false, features = ["std", "derive"] }
 serde-enum-str = { version = "0.2", default-features = false }

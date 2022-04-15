@@ -1,6 +1,6 @@
 [package]
 name = "ip2location-bin-format"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["vkill <vkill.net@gmail.com>"]
 edition = "2021"
 description = "IP2Location BIN Format"
@@ -11,6 +11,11 @@ documentation = "https://docs.rs/ip2location-bin-format"
 keywords = []
 categories = []
 readme = "README.md"
+exclude = [
+    "/data/**/*.BIN",
+    "/data/**/*.ZIP",
+    "/data/**/*.CSV",
+]
 
 [features]
 default = ["chrono", "lru"]
