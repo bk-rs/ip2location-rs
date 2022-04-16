@@ -223,12 +223,13 @@ impl
 //
 #[derive(Debug, Clone, Copy)]
 pub enum RecordField {
-    ProxyType,
     CountryCodeAndName,
     RegionName,
     CityName,
     Isp,
     Domain,
+    //
+    ProxyType,
     UsageType,
     Asn,
     AsName,
@@ -241,12 +242,13 @@ pub enum RecordField {
 impl From<&RecordField> for ip2location_bin_format::record_field::RecordField {
     fn from(x: &RecordField) -> Self {
         match x {
-            RecordField::ProxyType => Self::PROXYTYPE,
             RecordField::CountryCodeAndName => Self::COUNTRY,
             RecordField::RegionName => Self::REGION,
             RecordField::CityName => Self::CITY,
             RecordField::Isp => Self::ISP,
             RecordField::Domain => Self::DOMAIN,
+            //
+            RecordField::ProxyType => Self::PROXYTYPE,
             RecordField::UsageType => Self::USAGETYPE,
             RecordField::Asn => Self::ASN,
             RecordField::AsName => Self::AS,

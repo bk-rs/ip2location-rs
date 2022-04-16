@@ -205,12 +205,13 @@ pub enum RecordField {
     CountryCodeAndName,
     RegionName,
     CityName,
+    Isp,
+    Domain,
+    //
     Latitude,
     Longitude,
     ZipCode,
     TimeZone,
-    Isp,
-    Domain,
     NetSpeed,
 }
 
@@ -220,12 +221,13 @@ impl From<&RecordField> for ip2location_bin_format::record_field::RecordField {
             RecordField::CountryCodeAndName => Self::COUNTRY,
             RecordField::RegionName => Self::REGION,
             RecordField::CityName => Self::CITY,
+            RecordField::Isp => Self::ISP,
+            RecordField::Domain => Self::DOMAIN,
+            //
             RecordField::Latitude => Self::LATITUDE,
             RecordField::Longitude => Self::LONGITUDE,
             RecordField::ZipCode => Self::ZIPCODE,
             RecordField::TimeZone => Self::TIMEZONE,
-            RecordField::Isp => Self::ISP,
-            RecordField::Domain => Self::DOMAIN,
             RecordField::NetSpeed => Self::NETSPEED,
         }
     }

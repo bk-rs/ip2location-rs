@@ -5,11 +5,6 @@
 # Example
 
 ```rust
-#[cfg(not(feature = "tokio_fs"))]
-{
-fn main() {}
-}
-
 #[cfg(feature = "tokio_fs")]
 {
 use std::{error, net::Ipv4Addr};
