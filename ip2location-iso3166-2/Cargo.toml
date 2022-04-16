@@ -12,6 +12,7 @@ keywords = []
 categories = []
 readme = "README.md"
 exclude = [
+    "/data/*.zip",
     "/data/*.ZIP",
 ]
 

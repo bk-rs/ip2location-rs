@@ -11,6 +11,10 @@ documentation = "https://docs.rs/ip2location-country-information"
 keywords = []
 categories = []
 readme = "README.md"
+exclude = [
+    "/data/*.zip",
+    "/data/*.ZIP",
+]
 
 [package.metadata.docs.rs]
 all-features = true
