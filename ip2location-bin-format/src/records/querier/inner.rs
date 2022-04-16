@@ -133,6 +133,9 @@ where
                         RecordFieldContent::COUNTRY(i, _, _) => *i = content_index,
                         RecordFieldContent::REGION(i, _) => *i = content_index,
                         RecordFieldContent::CITY(i, _) => *i = content_index,
+                        RecordFieldContent::ISP(i, _) => *i = content_index,
+                        RecordFieldContent::DOMAIN(i, _) => *i = content_index,
+                        //
                         RecordFieldContent::LATITUDE(v) => {
                             *v = {
                                 f32::from_ne_bytes(self.buf[index..index + 4].try_into().unwrap())
@@ -145,9 +148,9 @@ where
                         }
                         RecordFieldContent::ZIPCODE(i, _) => *i = content_index,
                         RecordFieldContent::TIMEZONE(i, _) => *i = content_index,
+                        RecordFieldContent::NETSPEED(i, _) => *i = content_index,
+                        //
                         RecordFieldContent::PROXYTYPE(i, _) => *i = content_index,
-                        RecordFieldContent::ISP(i, _) => *i = content_index,
-                        RecordFieldContent::DOMAIN(i, _) => *i = content_index,
                         RecordFieldContent::USAGETYPE(i, _) => *i = content_index,
                         RecordFieldContent::ASN(i, _) => *i = content_index,
                         RecordFieldContent::AS(i, _) => *i = content_index,

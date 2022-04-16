@@ -9,8 +9,8 @@ use crate::header::schema::{SchemaSubType, SchemaType};
 pub const RECORD_FIELD_LEN_WITHOUT_IP: u32 = 4;
 
 //
-// TODO,  12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25
-pub const RECORD_FIELDS_DBN_LIST: &[u8] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+// TODO,  15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25
+pub const RECORD_FIELDS_DBN_LIST: &[u8] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
 
 /*
 https://github.com/ip2location/ip2location-go/blob/v9.2.0/ip2location.go#L123-L143
@@ -121,8 +121,43 @@ pub const RECORD_FIELDS_DB11: &[RecordField] = &[
     RecordField::ZIPCODE,
     RecordField::TIMEZONE,
 ];
+pub const RECORD_FIELDS_DB12: &[RecordField] = &[
+    RecordField::IP,
+    RecordField::COUNTRY,
+    RecordField::REGION,
+    RecordField::CITY,
+    RecordField::LATITUDE,
+    RecordField::LONGITUDE,
+    RecordField::ZIPCODE,
+    RecordField::TIMEZONE,
+    RecordField::ISP,
+    RecordField::DOMAIN,
+];
+pub const RECORD_FIELDS_DB13: &[RecordField] = &[
+    RecordField::IP,
+    RecordField::COUNTRY,
+    RecordField::REGION,
+    RecordField::CITY,
+    RecordField::LATITUDE,
+    RecordField::LONGITUDE,
+    RecordField::TIMEZONE,
+    RecordField::NETSPEED,
+];
+pub const RECORD_FIELDS_DB14: &[RecordField] = &[
+    RecordField::IP,
+    RecordField::COUNTRY,
+    RecordField::REGION,
+    RecordField::CITY,
+    RecordField::LATITUDE,
+    RecordField::LONGITUDE,
+    RecordField::ZIPCODE,
+    RecordField::TIMEZONE,
+    RecordField::ISP,
+    RecordField::DOMAIN,
+    RecordField::NETSPEED,
+];
 
-// TODO, RECORD_FIELDS_DB12 - RECORD_FIELDS_DB25
+// TODO, RECORD_FIELDS_DB15 - RECORD_FIELDS_DB25
 
 //
 pub const RECORD_FIELDS_PXN_LIST: &[u8] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
@@ -280,6 +315,7 @@ pub enum RecordField {
     LONGITUDE,
     ZIPCODE,
     TIMEZONE,
+    NETSPEED,
     // IP2Proxy
     PROXYTYPE,
     USAGETYPE,
@@ -330,18 +366,22 @@ impl RecordFields {
                 RecordField::IP => {
                     unreachable!()
                 }
+                //
                 RecordField::COUNTRY => {
                     RecordFieldContent::COUNTRY(0, Default::default(), Default::default())
                 }
                 RecordField::REGION => RecordFieldContent::REGION(0, Default::default()),
                 RecordField::CITY => RecordFieldContent::CITY(0, Default::default()),
+                RecordField::ISP => RecordFieldContent::ISP(0, Default::default()),
+                RecordField::DOMAIN => RecordFieldContent::DOMAIN(0, Default::default()),
+                //
                 RecordField::LATITUDE => RecordFieldContent::LATITUDE(0.0),
                 RecordField::LONGITUDE => RecordFieldContent::LONGITUDE(0.0),
                 RecordField::ZIPCODE => RecordFieldContent::ZIPCODE(0, Default::default()),
                 RecordField::TIMEZONE => RecordFieldContent::TIMEZONE(0, Default::default()),
+                RecordField::NETSPEED => RecordFieldContent::NETSPEED(0, Default::default()),
+                //
                 RecordField::PROXYTYPE => RecordFieldContent::PROXYTYPE(0, Default::default()),
-                RecordField::ISP => RecordFieldContent::ISP(0, Default::default()),
-                RecordField::DOMAIN => RecordFieldContent::DOMAIN(0, Default::default()),
                 RecordField::USAGETYPE => RecordFieldContent::USAGETYPE(0, Default::default()),
                 RecordField::ASN => RecordFieldContent::ASN(0, Default::default()),
                 RecordField::AS => RecordFieldContent::AS(0, Default::default()),
@@ -381,6 +421,9 @@ impl TryFrom<(SchemaType, SchemaSubType)> for RecordFields {
                 9 => Ok(Self(RECORD_FIELDS_DB9.to_owned())),
                 10 => Ok(Self(RECORD_FIELDS_DB10.to_owned())),
                 11 => Ok(Self(RECORD_FIELDS_DB11.to_owned())),
+                12 => Ok(Self(RECORD_FIELDS_DB12.to_owned())),
+                13 => Ok(Self(RECORD_FIELDS_DB13.to_owned())),
+                14 => Ok(Self(RECORD_FIELDS_DB14.to_owned())),
                 _ => Err(sub_type),
             },
             SchemaType::IP2Proxy => match sub_type.0 {
@@ -408,15 +451,16 @@ pub enum RecordFieldContent {
     COUNTRY(u32, Box<str>, Box<str>),
     REGION(u32, Box<str>),
     CITY(u32, Box<str>),
+    ISP(u32, Box<str>),
+    DOMAIN(u32, Box<str>),
     // IP2Location
     LATITUDE(f32),
     LONGITUDE(f32),
     ZIPCODE(u32, Box<str>),
     TIMEZONE(u32, Box<str>),
+    NETSPEED(u32, Box<str>),
     // IP2Proxy
     PROXYTYPE(u32, Box<str>),
-    ISP(u32, Box<str>),
-    DOMAIN(u32, Box<str>),
     USAGETYPE(u32, Box<str>),
     ASN(u32, Box<str>),
     AS(u32, Box<str>),
@@ -449,13 +493,16 @@ impl RecordFieldContents {
             RecordFieldContent::COUNTRY(_, _, _) => record_fields.contains(&RecordField::COUNTRY),
             RecordFieldContent::REGION(_, _) => record_fields.contains(&RecordField::REGION),
             RecordFieldContent::CITY(_, _) => record_fields.contains(&RecordField::CITY),
+            RecordFieldContent::ISP(_, _) => record_fields.contains(&RecordField::ISP),
+            RecordFieldContent::DOMAIN(_, _) => record_fields.contains(&RecordField::DOMAIN),
+            //
             RecordFieldContent::LATITUDE(_) => record_fields.contains(&RecordField::LATITUDE),
             RecordFieldContent::LONGITUDE(_) => record_fields.contains(&RecordField::LONGITUDE),
             RecordFieldContent::ZIPCODE(_, _) => record_fields.contains(&RecordField::ZIPCODE),
             RecordFieldContent::TIMEZONE(_, _) => record_fields.contains(&RecordField::TIMEZONE),
+            RecordFieldContent::NETSPEED(_, _) => record_fields.contains(&RecordField::NETSPEED),
+            //
             RecordFieldContent::PROXYTYPE(_, _) => record_fields.contains(&RecordField::PROXYTYPE),
-            RecordFieldContent::ISP(_, _) => record_fields.contains(&RecordField::ISP),
-            RecordFieldContent::DOMAIN(_, _) => record_fields.contains(&RecordField::DOMAIN),
             RecordFieldContent::USAGETYPE(_, _) => record_fields.contains(&RecordField::USAGETYPE),
             RecordFieldContent::ASN(_, _) => record_fields.contains(&RecordField::ASN),
             RecordFieldContent::AS(_, _) => record_fields.contains(&RecordField::AS),

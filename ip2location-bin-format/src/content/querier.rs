@@ -97,6 +97,9 @@ where
 
                     (*i, 20)
                 }
+                RecordFieldContent::ISP(i, _) => (*i, 10),
+                RecordFieldContent::DOMAIN(i, _) => (*i, 30),
+                //
                 RecordFieldContent::LATITUDE(_) => continue,
                 RecordFieldContent::LONGITUDE(_) => continue,
                 #[allow(unused_variables)]
@@ -125,6 +128,17 @@ where
 
                     (*i, 8)
                 }
+                RecordFieldContent::NETSPEED(i, v) => {
+                    if let Some(value) = self.static_cache.get(i) {
+                        *v = value.to_owned();
+
+                        continue;
+                    }
+
+                    // TODO, 10
+                    (*i, 10)
+                }
+                //
                 RecordFieldContent::PROXYTYPE(i, v) => {
                     if let Some(value) = self.static_cache.get(i) {
                         *v = value.to_owned();
@@ -134,8 +148,6 @@ where
 
                     (*i, 3)
                 }
-                RecordFieldContent::ISP(i, _) => (*i, 10),
-                RecordFieldContent::DOMAIN(i, _) => (*i, 30),
                 RecordFieldContent::USAGETYPE(i, v) => {
                     if let Some(value) = self.static_cache.get(i) {
                         *v = value.to_owned();
@@ -246,6 +258,13 @@ where
                             self.lru_cache.push(*i, value);
                         }
                     }
+                    RecordFieldContent::ISP(_, v) => {
+                        *v = value.to_owned();
+                    }
+                    RecordFieldContent::DOMAIN(_, v) => {
+                        *v = value.to_owned();
+                    }
+                    //
                     RecordFieldContent::LATITUDE(_) => {}
                     RecordFieldContent::LONGITUDE(_) => {}
                     #[allow(unused_variables)]
@@ -264,15 +283,13 @@ where
                             self.lru_cache.push(*i, value);
                         }
                     }
+                    RecordFieldContent::NETSPEED(_, v) => {
+                        *v = value.to_owned();
+                    }
+                    //
                     RecordFieldContent::PROXYTYPE(i, v) => {
                         *v = value.to_owned();
                         self.static_cache.insert(*i, value);
-                    }
-                    RecordFieldContent::ISP(_, v) => {
-                        *v = value.to_owned();
-                    }
-                    RecordFieldContent::DOMAIN(_, v) => {
-                        *v = value.to_owned();
                     }
                     RecordFieldContent::USAGETYPE(i, v) => {
                         *v = value.to_owned();

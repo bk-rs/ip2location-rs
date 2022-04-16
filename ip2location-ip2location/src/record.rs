@@ -30,6 +30,8 @@ pub struct Record {
     pub isp: Option<RecordValue>,
     #[serde(default, with = "serde_field_with::to_and_from_string_option")]
     pub domain: Option<RecordValue>,
+    #[serde(default, with = "serde_field_with::to_and_from_string_option")]
+    pub net_speed: Option<RecordValue>,
 }
 
 fn ip_deserialize<'de, D>(deserializer: D) -> Result<IpAddr, D::Error>
@@ -104,6 +106,7 @@ impl Record {
             time_zone: Default::default(),
             isp: Default::default(),
             domain: Default::default(),
+            net_speed: Default::default(),
         }
     }
 }
@@ -140,6 +143,13 @@ impl
                 RecordFieldContent::CITY(_, v) => {
                     record.city_name = Some(v.parse().expect("unreachable"));
                 }
+                RecordFieldContent::ISP(_, v) => {
+                    record.isp = Some(v.parse().expect("unreachable"));
+                }
+                RecordFieldContent::DOMAIN(_, v) => {
+                    record.domain = Some(v.parse().expect("unreachable"));
+                }
+                //
                 RecordFieldContent::LATITUDE(v) => {
                     record.latitude = Some(*v);
                 }
@@ -152,14 +162,12 @@ impl
                 RecordFieldContent::TIMEZONE(_, v) => {
                     record.time_zone = Some(v.parse().expect("unreachable"));
                 }
+                RecordFieldContent::NETSPEED(_, v) => {
+                    record.net_speed = Some(v.parse().expect("unreachable"));
+                }
+                //
                 RecordFieldContent::PROXYTYPE(_, _) => {
                     return Err("Unknown field PROXYTYPE".into());
-                }
-                RecordFieldContent::ISP(_, v) => {
-                    record.isp = Some(v.parse().expect("unreachable"));
-                }
-                RecordFieldContent::DOMAIN(_, v) => {
-                    record.domain = Some(v.parse().expect("unreachable"));
                 }
                 RecordFieldContent::USAGETYPE(_, _) => {
                     return Err("Unknown field USAGETYPE".into());
@@ -203,6 +211,7 @@ pub enum RecordField {
     TimeZone,
     Isp,
     Domain,
+    NetSpeed,
 }
 
 impl From<&RecordField> for ip2location_bin_format::record_field::RecordField {
@@ -217,6 +226,7 @@ impl From<&RecordField> for ip2location_bin_format::record_field::RecordField {
             RecordField::TimeZone => Self::TIMEZONE,
             RecordField::Isp => Self::ISP,
             RecordField::Domain => Self::DOMAIN,
+            RecordField::NetSpeed => Self::NETSPEED,
         }
     }
 }

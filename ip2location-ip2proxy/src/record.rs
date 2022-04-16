@@ -158,6 +158,13 @@ impl
                 RecordFieldContent::CITY(_, v) => {
                     record.city_name = Some(v.parse().expect("unreachable"));
                 }
+                RecordFieldContent::ISP(_, v) => {
+                    record.isp = Some(v.parse().expect("unreachable"));
+                }
+                RecordFieldContent::DOMAIN(_, v) => {
+                    record.domain = Some(v.parse().expect("unreachable"));
+                }
+                //
                 RecordFieldContent::LATITUDE(_) => {
                     return Err("Unknown field LATITUDE".into());
                 }
@@ -170,17 +177,15 @@ impl
                 RecordFieldContent::TIMEZONE(_, _) => {
                     return Err("Unknown field TIMEZONE".into());
                 }
+                RecordFieldContent::NETSPEED(_, _) => {
+                    return Err("Unknown field NETSPEED".into());
+                }
+                //
                 RecordFieldContent::PROXYTYPE(_, v) => {
                     let v = v
                         .parse::<ProxyType>()
                         .map_err(|err| Box::<str>::from(err.to_string()))?;
                     record.proxy_type = Some(v);
-                }
-                RecordFieldContent::ISP(_, v) => {
-                    record.isp = Some(v.parse().expect("unreachable"));
-                }
-                RecordFieldContent::DOMAIN(_, v) => {
-                    record.domain = Some(v.parse().expect("unreachable"));
                 }
                 RecordFieldContent::USAGETYPE(_, v) => {
                     let v = v
