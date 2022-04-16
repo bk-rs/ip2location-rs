@@ -22,19 +22,22 @@ exclude = [
 all-features = true
 
 [features]
-default = ["tokio_fs"]
+default = ["tokio_fs", "serde"]
 
 tokio_fs = ["tokio", "async-compat"]
 async_fs = ["async-fs"]
 
-_integration_tests = ["tokio_fs"]
+serde = ["dep:serde", "serde-field-with"]
+
+_integration_tests = ["tokio_fs", "serde"]
 
 [dependencies]
-ip2location-bin-format = { version = "0.1", default-features = false, features = ["chrono", "lru"], path = "../ip2location-bin-format" }
+ip2location-bin-format = { version = "0.1", default-features = false, features = ["lru"], path = "../ip2location-bin-format" }
 
-serde = { version = "1.0", default_features = false, features = ["std", "derive"] }
-serde-field-with = { version = "0.1.2", default-features = false, features = ["std"] }
 futures-util = { version = "0.3", default-features = false, features = ["std", "io"] }
+
+serde = { version = "1.0", default_features = false, features = ["std", "derive"], optional = true }
+serde-field-with = { version = "0.1.2", default-features = false, features = ["std"], optional = true }
 
 tokio = { version = "1.17", default-features = false, features = ["fs"], optional = true }
 async-compat = { version = "0.2", default-features = false, optional = true }
