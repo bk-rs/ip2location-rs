@@ -12,6 +12,34 @@ pub const RECORD_FIELD_LEN_WITHOUT_IP: u32 = 4;
 // TODO,  12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25
 pub const RECORD_FIELDS_DBN_LIST: &[u8] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
+/*
+https://github.com/ip2location/ip2location-go/blob/v9.2.0/ip2location.go#L123-L143
+
+var country_position            = [26]uint8{0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,  2, 2,   2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2}
+var region_position             = [26]uint8{0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,  3, 3,   3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3}
+var city_position               = [26]uint8{0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,  4, 4,   4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4}
+var isp_position                = [26]uint8{0, 0, 3, 0, 5, 0, 7, 5, 7, 0, 8, 0, 9,  0, 9,   0,  9,  0,  9,  7,  9,  0,  9,  7,  9,  9}
+var latitude_position           = [26]uint8{0, 0, 0, 0, 0, 5, 5, 0, 5, 5, 5, 5, 5,  5, 5,   5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5}
+var longitude_position          = [26]uint8{0, 0, 0, 0, 0, 6, 6, 0, 6, 6, 6, 6, 6,  6, 6,   6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6}
+var domain_position             = [26]uint8{0, 0, 0, 0, 0, 0, 0, 6, 8, 0, 9, 0, 10, 0, 10,  0, 10,  0, 10,  8, 10,  0, 10,  8, 10, 10}
+var zipcode_position            = [26]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7,  0,  7,  7,  7,  0,  7,  0,  7,  7,  7,  0,  7,  7}
+var timezone_position           = [26]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 8,  7,  8,  8,  8,  7,  8,  0,  8,  8,  8,  0,  8,  8}
+var netspeed_position           = [26]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  8, 11,  0, 11,  8, 11,  0, 11,  0, 11,  0, 11, 11}
+var iddcode_position            = [26]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  9, 12,  0, 12,  0, 12,  9, 12,  0, 12, 12}
+var areacode_position           = [26]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0, 10, 13,  0, 13,  0, 13, 10, 13,  0, 13, 13}
+var weatherstationcode_position = [26]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  9, 14,  0, 14,  0, 14,  0, 14, 14}
+var weatherstationname_position = [26]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0, 10, 15,  0, 15,  0, 15,  0, 15, 15}
+var mcc_position                = [26]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  9, 16,  0, 16,  9, 16, 16}
+var mnc_position                = [26]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0, 10, 17,  0, 17, 10, 17, 17}
+var mobilebrand_position        = [26]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0, 11, 18,  0, 18, 11, 18, 18}
+var elevation_position          = [26]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0, 11, 19,  0, 19, 19}
+var usagetype_position          = [26]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 12, 20, 20}
+var addresstype_position        = [26]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 21}
+var category_position           = [26]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 22}
+
+                                               1  2  3  4  5  6  7  8  9  10 11 12  13  14  15  16  17  18  19  20  21  22  23  24 25
+*/
+
 pub const RECORD_FIELDS_DB1: &[RecordField] = &[RecordField::IP, RecordField::COUNTRY];
 pub const RECORD_FIELDS_DB2: &[RecordField] =
     &[RecordField::IP, RecordField::COUNTRY, RecordField::ISP];
@@ -98,6 +126,25 @@ pub const RECORD_FIELDS_DB11: &[RecordField] = &[
 
 //
 pub const RECORD_FIELDS_PXN_LIST: &[u8] = &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+
+/*
+https://github.com/ip2location/ip2proxy-go/blob/v3.3.2/ip2proxy.go#L99-L110
+
+var countryPosition   = [12]uint8{0, 2, 3, 3, 3, 3, 3,  3,  3,  3,  3,  3}
+var regionPosition    = [12]uint8{0, 0, 0, 4, 4, 4, 4,  4,  4,  4,  4,  4}
+var cityPosition      = [12]uint8{0, 0, 0, 5, 5, 5, 5,  5,  5,  5,  5,  5}
+var ispPosition       = [12]uint8{0, 0, 0, 0, 6, 6, 6,  6,  6,  6,  6,  6}
+var proxyTypePosition = [12]uint8{0, 0, 2, 2, 2, 2, 2,  2,  2,  2,  2,  2}
+var domainPosition    = [12]uint8{0, 0, 0, 0, 0, 7, 7,  7,  7,  7,  7,  7}
+var usageTypePosition = [12]uint8{0, 0, 0, 0, 0, 0, 8,  8,  8,  8,  8,  8}
+var asnPosition       = [12]uint8{0, 0, 0, 0, 0, 0, 0,  9,  9,  9,  9,  9}
+var asPosition        = [12]uint8{0, 0, 0, 0, 0, 0, 0, 10, 10, 10, 10, 10}
+var lastSeenPosition  = [12]uint8{0, 0, 0, 0, 0, 0, 0,  0, 11, 11, 11, 11}
+var threatPosition    = [12]uint8{0, 0, 0, 0, 0, 0, 0,  0,  0, 12, 12, 12}
+var providerPosition  = [12]uint8{0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0, 13}
+
+                                     1  2  3  4  5  6   7   8   9  10  11
+*/
 
 pub const RECORD_FIELDS_PX1: &[RecordField] = &[RecordField::IP, RecordField::COUNTRY];
 
