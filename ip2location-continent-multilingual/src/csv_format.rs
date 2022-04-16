@@ -28,11 +28,10 @@ impl Deref for Records {
 impl Records {
     pub fn from_csv<R: Read>(rdr: R) -> Result<Self, RecordsFromCsvError> {
         let mut rdr = CsvReader::from_reader(rdr);
-        let iter = rdr.records();
 
         let mut inner = vec![];
 
-        for record in iter {
+        for record in rdr.records() {
             let record = record.map_err(RecordsFromCsvError::CsvParseFailed)?;
             let row: Record = record
                 .deserialize(None)
