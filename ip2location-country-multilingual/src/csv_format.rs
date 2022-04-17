@@ -1,7 +1,7 @@
 use core::{fmt, ops::Deref};
 use std::io::Read;
 
-use csv::{Error as CsvError, Reader as CsvReader};
+use csv::{Error as CsvError, Reader};
 
 use crate::record::Record;
 
@@ -27,7 +27,7 @@ impl Deref for Records {
 //
 impl Records {
     pub fn from_csv<R: Read>(rdr: R) -> Result<Self, RecordsFromCsvError> {
-        let mut rdr = CsvReader::from_reader(rdr);
+        let mut rdr = Reader::from_reader(rdr);
 
         let mut inner = vec![];
 
