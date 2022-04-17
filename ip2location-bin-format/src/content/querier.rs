@@ -54,16 +54,16 @@ where
     ) -> Result<(), FillError> {
         for record_field_content in record_field_contents.iter_mut() {
             //
-            let (seek_from_start, len_estimatable) = match record_field_content {
+            let (seek_from_start, s_len_estimatable) = match record_field_content {
                 RecordFieldContent::COUNTRY(i, v, v_name) => {
-                    if let Some(value) = self.static_cache.get(i) {
-                        *v = value.to_owned();
+                    if let Some(s) = self.static_cache.get(i) {
+                        *v = s.to_owned();
 
-                        if let Some(value) = self
+                        if let Some(s) = self
                             .static_cache
                             .get(&(*i + COUNTRY_NAME_INDEX_OFFSET as u32))
                         {
-                            *v_name = value.to_owned();
+                            *v_name = s.to_owned();
 
                             continue;
                         }
@@ -75,8 +75,8 @@ where
                 RecordFieldContent::REGION(i, v) => {
                     #[cfg(feature = "lru")]
                     {
-                        if let Some(value) = self.lru_cache.get(i) {
-                            *v = value.to_owned();
+                        if let Some(s) = self.lru_cache.get(i) {
+                            *v = s.to_owned();
 
                             continue;
                         }
@@ -88,8 +88,8 @@ where
                 RecordFieldContent::CITY(i, v) => {
                     #[cfg(feature = "lru")]
                     {
-                        if let Some(value) = self.lru_cache.get(i) {
-                            *v = value.to_owned();
+                        if let Some(s) = self.lru_cache.get(i) {
+                            *v = s.to_owned();
 
                             continue;
                         }
@@ -106,8 +106,8 @@ where
                 RecordFieldContent::ZIPCODE(i, v) => {
                     #[cfg(feature = "lru")]
                     {
-                        if let Some(value) = self.lru_cache.get(i) {
-                            *v = value.to_owned();
+                        if let Some(s) = self.lru_cache.get(i) {
+                            *v = s.to_owned();
 
                             continue;
                         }
@@ -119,8 +119,8 @@ where
                 RecordFieldContent::TIMEZONE(i, v) => {
                     #[cfg(feature = "lru")]
                     {
-                        if let Some(value) = self.lru_cache.get(i) {
-                            *v = value.to_owned();
+                        if let Some(s) = self.lru_cache.get(i) {
+                            *v = s.to_owned();
 
                             continue;
                         }
@@ -129,8 +129,8 @@ where
                     (*i, 8)
                 }
                 RecordFieldContent::NETSPEED(i, v) => {
-                    if let Some(value) = self.static_cache.get(i) {
-                        *v = value.to_owned();
+                    if let Some(s) = self.static_cache.get(i) {
+                        *v = s.to_owned();
 
                         continue;
                     }
@@ -140,8 +140,8 @@ where
                 }
                 //
                 RecordFieldContent::PROXYTYPE(i, v) => {
-                    if let Some(value) = self.static_cache.get(i) {
-                        *v = value.to_owned();
+                    if let Some(s) = self.static_cache.get(i) {
+                        *v = s.to_owned();
 
                         continue;
                     }
@@ -149,8 +149,8 @@ where
                     (*i, 3)
                 }
                 RecordFieldContent::USAGETYPE(i, v) => {
-                    if let Some(value) = self.static_cache.get(i) {
-                        *v = value.to_owned();
+                    if let Some(s) = self.static_cache.get(i) {
+                        *v = s.to_owned();
 
                         continue;
                     }
@@ -180,7 +180,7 @@ where
             //
             let n = self
                 .stream
-                .read(&mut self.buf[..len_estimatable + 1])
+                .read(&mut self.buf[..s_len_estimatable + 1])
                 .await
                 .map_err(FillError::ReadFailed)?;
             n_read += n;
@@ -214,17 +214,16 @@ where
                     }
                 }
 
-                let len = self.buf[0];
-                let value: Box<str> = str::from_utf8(&self.buf[1..1 + len as usize])
-                    .unwrap()
-                    .into();
+                let s_len = self.buf[0];
+                let s = str::from_utf8(&self.buf[1..1 + s_len as usize])
+                    .map_err(FillError::ToUtf8Failed)?;
 
                 match record_field_content {
                     RecordFieldContent::COUNTRY(i, v, v_name) => {
                         match n_loop {
                             0 => {
-                                *v = value.to_owned();
-                                self.static_cache.insert(*i, value);
+                                *v = s.into();
+                                self.static_cache.insert(*i, s.into());
 
                                 n_loop += 1;
                                 // https://github.com/ip2location/ip2proxy-rust/blob/5bdd3ef61c2e243c1b61eda1475ca23eab2b7240/src/db.rs#L252
@@ -235,83 +234,83 @@ where
                                 continue;
                             }
                             1 => {
-                                *v_name = value.to_owned();
+                                *v_name = s.into();
                                 self.static_cache
-                                    .insert(*i + COUNTRY_NAME_INDEX_OFFSET as u32, value);
+                                    .insert(*i + COUNTRY_NAME_INDEX_OFFSET as u32, s.into());
                             }
                             _ => unreachable!(),
                         }
                     }
                     #[allow(unused_variables)]
                     RecordFieldContent::REGION(i, v) => {
-                        *v = value.to_owned();
+                        *v = s.into();
                         #[cfg(feature = "lru")]
                         {
-                            self.lru_cache.push(*i, value);
+                            self.lru_cache.push(*i, s.into());
                         }
                     }
                     #[allow(unused_variables)]
                     RecordFieldContent::CITY(i, v) => {
-                        *v = value.to_owned();
+                        *v = s.into();
                         #[cfg(feature = "lru")]
                         {
-                            self.lru_cache.push(*i, value);
+                            self.lru_cache.push(*i, s.into());
                         }
                     }
                     RecordFieldContent::ISP(_, v) => {
-                        *v = value.to_owned();
+                        *v = s.into();
                     }
                     RecordFieldContent::DOMAIN(_, v) => {
-                        *v = value.to_owned();
+                        *v = s.into();
                     }
                     //
                     RecordFieldContent::LATITUDE(_) => {}
                     RecordFieldContent::LONGITUDE(_) => {}
                     #[allow(unused_variables)]
                     RecordFieldContent::ZIPCODE(i, v) => {
-                        *v = value.to_owned();
+                        *v = s.into();
                         #[cfg(feature = "lru")]
                         {
-                            self.lru_cache.push(*i, value);
+                            self.lru_cache.push(*i, s.into());
                         }
                     }
                     #[allow(unused_variables)]
                     RecordFieldContent::TIMEZONE(i, v) => {
-                        *v = value.to_owned();
+                        *v = s.into();
                         #[cfg(feature = "lru")]
                         {
-                            self.lru_cache.push(*i, value);
+                            self.lru_cache.push(*i, s.into());
                         }
                     }
                     RecordFieldContent::NETSPEED(_, v) => {
-                        *v = value.to_owned();
+                        *v = s.into();
                     }
                     //
                     RecordFieldContent::PROXYTYPE(i, v) => {
-                        *v = value.to_owned();
-                        self.static_cache.insert(*i, value);
+                        *v = s.into();
+                        self.static_cache.insert(*i, s.into());
                     }
                     RecordFieldContent::USAGETYPE(i, v) => {
-                        *v = value.to_owned();
-                        self.static_cache.insert(*i, value);
+                        *v = s.into();
+                        self.static_cache.insert(*i, s.into());
                     }
                     RecordFieldContent::ASN(_, v) => {
-                        *v = value.to_owned();
+                        *v = s.into();
                     }
                     RecordFieldContent::AS(_, v) => {
-                        *v = value.to_owned();
+                        *v = s.into();
                     }
                     RecordFieldContent::LASTSEEN(_, v) => {
-                        *v = value.to_owned();
+                        *v = s.into();
                     }
                     RecordFieldContent::THREAT(_, v) => {
-                        *v = value.to_owned();
+                        *v = s.into();
                     }
                     RecordFieldContent::RESIDENTIAL(_, v) => {
-                        *v = value.to_owned();
+                        *v = s.into();
                     }
                     RecordFieldContent::PROVIDER(_, v) => {
-                        *v = value.to_owned();
+                        *v = s.into();
                     }
                 }
 
@@ -328,6 +327,7 @@ where
 pub enum FillError {
     SeekFailed(IoError),
     ReadFailed(IoError),
+    ToUtf8Failed(str::Utf8Error),
     Other(&'static str),
 }
 
