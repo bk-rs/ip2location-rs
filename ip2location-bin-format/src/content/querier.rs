@@ -325,9 +325,9 @@ where
 fn filter_str(s: impl AsRef<str>) -> Option<Box<str>> {
     let s = s.as_ref();
     if s == "-" {
-        Some(s.into())
-    } else {
         None
+    } else {
+        Some(s.into())
     }
 }
 
