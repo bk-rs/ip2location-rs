@@ -13,7 +13,7 @@ use ip2location_bin_format::querier::{
     LookupError as QuerierLookupError, NewError as QuerierNewError, Querier,
 };
 
-use crate::record::{Record, RecordField};
+use crate::record::{OptionRecord, Record, RecordField};
 
 //
 #[derive(Debug)]
@@ -110,9 +110,9 @@ where
             .await
             .map_err(DatabaseLookupError::QuerierLookupError)?
         {
-            Some(x) => Ok(Some(
-                Record::try_from(x).map_err(DatabaseLookupError::ToRecordFailed)?,
-            )),
+            Some(x) => Ok(OptionRecord::try_from(x)
+                .map_err(DatabaseLookupError::ToRecordFailed)?
+                .0),
             None => Ok(None),
         }
     }
@@ -135,9 +135,9 @@ where
             .await
             .map_err(DatabaseLookupError::QuerierLookupError)?
         {
-            Some(x) => Ok(Some(
-                Record::try_from(x).map_err(DatabaseLookupError::ToRecordFailed)?,
-            )),
+            Some(x) => Ok(OptionRecord::try_from(x)
+                .map_err(DatabaseLookupError::ToRecordFailed)?
+                .0),
             None => Ok(None),
         }
     }

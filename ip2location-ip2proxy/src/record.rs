@@ -151,12 +151,15 @@ impl Record {
     }
 }
 
+//
+pub(crate) struct OptionRecord(pub(crate) Option<Record>);
+
 impl
     TryFrom<(
         IpAddr,
         IpAddr,
         ip2location_bin_format::record_field::RecordFieldContents,
-    )> for Record
+    )> for OptionRecord
 {
     type Error = Box<str>;
 
@@ -174,20 +177,25 @@ impl
         for record_field_content in record_field_contents.iter() {
             match record_field_content {
                 RecordFieldContent::COUNTRY(_, v, v_name) => {
-                    record.country_code = v.to_owned();
-                    record.country_name = Some(v_name.to_owned());
+                    if let Some(v) = v {
+                        record.country_code = v.to_owned();
+                    } else {
+                        return Ok(OptionRecord(None));
+                    }
+
+                    record.country_name = v_name.to_owned();
                 }
                 RecordFieldContent::REGION(_, v) => {
-                    record.region_name = Some(v.to_owned());
+                    record.region_name = v.to_owned();
                 }
                 RecordFieldContent::CITY(_, v) => {
-                    record.city_name = Some(v.to_owned());
+                    record.city_name = v.to_owned();
                 }
                 RecordFieldContent::ISP(_, v) => {
-                    record.isp = Some(v.to_owned());
+                    record.isp = v.to_owned();
                 }
                 RecordFieldContent::DOMAIN(_, v) => {
-                    record.domain = Some(v.to_owned());
+                    record.domain = v.to_owned();
                 }
                 //
                 RecordFieldContent::LATITUDE(_) => {
@@ -207,42 +215,48 @@ impl
                 }
                 //
                 RecordFieldContent::PROXYTYPE(_, v) => {
-                    let v = v
-                        .parse::<ProxyType>()
-                        .map_err(|err| Box::<str>::from(err.to_string()))?;
-                    record.proxy_type = Some(v);
+                    if let Some(v) = v {
+                        let v = v
+                            .parse::<ProxyType>()
+                            .map_err(|err| Box::<str>::from(err.to_string()))?;
+                        record.proxy_type = Some(v);
+                    }
                 }
                 RecordFieldContent::USAGETYPE(_, v) => {
-                    let v = v
-                        .parse::<UsageType>()
-                        .map_err(|err| Box::<str>::from(err.to_string()))?;
-                    record.usage_type = Some(v);
+                    if let Some(v) = v {
+                        let v = v
+                            .parse::<UsageType>()
+                            .map_err(|err| Box::<str>::from(err.to_string()))?;
+                        record.usage_type = Some(v);
+                    }
                 }
                 RecordFieldContent::ASN(_, v) => {
-                    let v = v
-                        .parse::<usize>()
-                        .map_err(|err| Box::<str>::from(err.to_string()))?;
-                    record.asn = Some(v);
+                    if let Some(v) = v {
+                        let v = v
+                            .parse::<usize>()
+                            .map_err(|err| Box::<str>::from(err.to_string()))?;
+                        record.asn = Some(v);
+                    }
                 }
                 RecordFieldContent::AS(_, v) => {
-                    record.as_name = Some(v.to_owned());
+                    record.as_name = v.to_owned();
                 }
                 RecordFieldContent::LASTSEEN(_, v) => {
-                    record.last_seen = Some(v.to_owned());
+                    record.last_seen = v.to_owned();
                 }
                 RecordFieldContent::THREAT(_, v) => {
-                    record.threat = Some(v.to_owned());
+                    record.threat = v.to_owned();
                 }
                 RecordFieldContent::RESIDENTIAL(_, v) => {
-                    record.residential = Some(v.to_owned());
+                    record.residential = v.to_owned();
                 }
                 RecordFieldContent::PROVIDER(_, v) => {
-                    record.provider = Some(v.to_owned());
+                    record.provider = v.to_owned();
                 }
             }
         }
 
-        Ok(record)
+        Ok(OptionRecord(Some(record)))
     }
 }
 

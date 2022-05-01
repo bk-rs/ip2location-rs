@@ -57,13 +57,13 @@ where
             let (seek_from_start, s_len_estimatable) = match record_field_content {
                 RecordFieldContent::COUNTRY(i, v, v_name) => {
                     if let Some(s) = self.static_cache.get(i) {
-                        *v = s.to_owned();
+                        *v = filter_str(s);
 
                         if let Some(s) = self
                             .static_cache
                             .get(&(*i + COUNTRY_NAME_INDEX_OFFSET as u32))
                         {
-                            *v_name = s.to_owned();
+                            *v_name = filter_str(s);
 
                             continue;
                         }
@@ -76,7 +76,7 @@ where
                     #[cfg(feature = "lru")]
                     {
                         if let Some(s) = self.lru_cache.get(i) {
-                            *v = s.to_owned();
+                            *v = filter_str(s);
 
                             continue;
                         }
@@ -89,7 +89,7 @@ where
                     #[cfg(feature = "lru")]
                     {
                         if let Some(s) = self.lru_cache.get(i) {
-                            *v = s.to_owned();
+                            *v = filter_str(s);
 
                             continue;
                         }
@@ -107,7 +107,7 @@ where
                     #[cfg(feature = "lru")]
                     {
                         if let Some(s) = self.lru_cache.get(i) {
-                            *v = s.to_owned();
+                            *v = filter_str(s);
 
                             continue;
                         }
@@ -120,7 +120,7 @@ where
                     #[cfg(feature = "lru")]
                     {
                         if let Some(s) = self.lru_cache.get(i) {
-                            *v = s.to_owned();
+                            *v = filter_str(s);
 
                             continue;
                         }
@@ -130,7 +130,7 @@ where
                 }
                 RecordFieldContent::NETSPEED(i, v) => {
                     if let Some(s) = self.static_cache.get(i) {
-                        *v = s.to_owned();
+                        *v = filter_str(s);
 
                         continue;
                     }
@@ -141,7 +141,7 @@ where
                 //
                 RecordFieldContent::PROXYTYPE(i, v) => {
                     if let Some(s) = self.static_cache.get(i) {
-                        *v = s.to_owned();
+                        *v = filter_str(s);
 
                         continue;
                     }
@@ -150,7 +150,7 @@ where
                 }
                 RecordFieldContent::USAGETYPE(i, v) => {
                     if let Some(s) = self.static_cache.get(i) {
-                        *v = s.to_owned();
+                        *v = filter_str(s);
 
                         continue;
                     }
@@ -222,7 +222,7 @@ where
                     RecordFieldContent::COUNTRY(i, v, v_name) => {
                         match n_loop {
                             0 => {
-                                *v = s.into();
+                                *v = filter_str(s);
                                 self.static_cache.insert(*i, s.into());
 
                                 n_loop += 1;
@@ -234,7 +234,7 @@ where
                                 continue;
                             }
                             1 => {
-                                *v_name = s.into();
+                                *v_name = filter_str(s);
                                 self.static_cache
                                     .insert(*i + COUNTRY_NAME_INDEX_OFFSET as u32, s.into());
                             }
@@ -243,7 +243,7 @@ where
                     }
                     #[allow(unused_variables)]
                     RecordFieldContent::REGION(i, v) => {
-                        *v = s.into();
+                        *v = filter_str(s);
                         #[cfg(feature = "lru")]
                         {
                             self.lru_cache.push(*i, s.into());
@@ -251,24 +251,24 @@ where
                     }
                     #[allow(unused_variables)]
                     RecordFieldContent::CITY(i, v) => {
-                        *v = s.into();
+                        *v = filter_str(s);
                         #[cfg(feature = "lru")]
                         {
                             self.lru_cache.push(*i, s.into());
                         }
                     }
                     RecordFieldContent::ISP(_, v) => {
-                        *v = s.into();
+                        *v = filter_str(s);
                     }
                     RecordFieldContent::DOMAIN(_, v) => {
-                        *v = s.into();
+                        *v = filter_str(s);
                     }
                     //
                     RecordFieldContent::LATITUDE(_) => {}
                     RecordFieldContent::LONGITUDE(_) => {}
                     #[allow(unused_variables)]
                     RecordFieldContent::ZIPCODE(i, v) => {
-                        *v = s.into();
+                        *v = filter_str(s);
                         #[cfg(feature = "lru")]
                         {
                             self.lru_cache.push(*i, s.into());
@@ -276,41 +276,41 @@ where
                     }
                     #[allow(unused_variables)]
                     RecordFieldContent::TIMEZONE(i, v) => {
-                        *v = s.into();
+                        *v = filter_str(s);
                         #[cfg(feature = "lru")]
                         {
                             self.lru_cache.push(*i, s.into());
                         }
                     }
                     RecordFieldContent::NETSPEED(_, v) => {
-                        *v = s.into();
+                        *v = filter_str(s);
                     }
                     //
                     RecordFieldContent::PROXYTYPE(i, v) => {
-                        *v = s.into();
+                        *v = filter_str(s);
                         self.static_cache.insert(*i, s.into());
                     }
                     RecordFieldContent::USAGETYPE(i, v) => {
-                        *v = s.into();
+                        *v = filter_str(s);
                         self.static_cache.insert(*i, s.into());
                     }
                     RecordFieldContent::ASN(_, v) => {
-                        *v = s.into();
+                        *v = filter_str(s);
                     }
                     RecordFieldContent::AS(_, v) => {
-                        *v = s.into();
+                        *v = filter_str(s);
                     }
                     RecordFieldContent::LASTSEEN(_, v) => {
-                        *v = s.into();
+                        *v = filter_str(s);
                     }
                     RecordFieldContent::THREAT(_, v) => {
-                        *v = s.into();
+                        *v = filter_str(s);
                     }
                     RecordFieldContent::RESIDENTIAL(_, v) => {
-                        *v = s.into();
+                        *v = filter_str(s);
                     }
                     RecordFieldContent::PROVIDER(_, v) => {
-                        *v = s.into();
+                        *v = filter_str(s);
                     }
                 }
 
@@ -319,6 +319,15 @@ where
         }
 
         Ok(())
+    }
+}
+
+fn filter_str(s: impl AsRef<str>) -> Option<Box<str>> {
+    let s = s.as_ref();
+    if s == "-" {
+        Some(s.into())
+    } else {
+        None
     }
 }
 

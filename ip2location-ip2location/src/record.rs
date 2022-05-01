@@ -113,12 +113,15 @@ impl Record {
     }
 }
 
+//
+pub(crate) struct OptionRecord(pub(crate) Option<Record>);
+
 impl
     TryFrom<(
         IpAddr,
         IpAddr,
         ip2location_bin_format::record_field::RecordFieldContents,
-    )> for Record
+    )> for OptionRecord
 {
     type Error = Box<str>;
 
@@ -136,20 +139,25 @@ impl
         for record_field_content in record_field_contents.iter() {
             match record_field_content {
                 RecordFieldContent::COUNTRY(_, v, v_name) => {
-                    record.country_code = v.to_owned();
-                    record.country_name = Some(v_name.to_owned());
+                    if let Some(v) = v {
+                        record.country_code = v.to_owned();
+                    } else {
+                        return Ok(OptionRecord(None));
+                    }
+
+                    record.country_name = v_name.to_owned();
                 }
                 RecordFieldContent::REGION(_, v) => {
-                    record.region_name = Some(v.to_owned());
+                    record.region_name = v.to_owned();
                 }
                 RecordFieldContent::CITY(_, v) => {
-                    record.city_name = Some(v.to_owned());
+                    record.city_name = v.to_owned();
                 }
                 RecordFieldContent::ISP(_, v) => {
-                    record.isp = Some(v.to_owned());
+                    record.isp = v.to_owned();
                 }
                 RecordFieldContent::DOMAIN(_, v) => {
-                    record.domain = Some(v.to_owned());
+                    record.domain = v.to_owned();
                 }
                 //
                 RecordFieldContent::LATITUDE(v) => {
@@ -159,13 +167,13 @@ impl
                     record.longitude = Some(*v);
                 }
                 RecordFieldContent::ZIPCODE(_, v) => {
-                    record.zip_code = Some(v.to_owned());
+                    record.zip_code = v.to_owned();
                 }
                 RecordFieldContent::TIMEZONE(_, v) => {
-                    record.time_zone = Some(v.to_owned());
+                    record.time_zone = v.to_owned();
                 }
                 RecordFieldContent::NETSPEED(_, v) => {
-                    record.net_speed = Some(v.to_owned());
+                    record.net_speed = v.to_owned();
                 }
                 //
                 RecordFieldContent::PROXYTYPE(_, _) => {
@@ -195,7 +203,7 @@ impl
             }
         }
 
-        Ok(record)
+        Ok(OptionRecord(Some(record)))
     }
 }
 

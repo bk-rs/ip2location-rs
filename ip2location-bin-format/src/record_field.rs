@@ -448,26 +448,26 @@ impl TryFrom<(SchemaType, SchemaSubType)> for RecordFields {
 #[derive(Debug, Clone)]
 pub enum RecordFieldContent {
     // Common
-    COUNTRY(u32, Box<str>, Box<str>),
-    REGION(u32, Box<str>),
-    CITY(u32, Box<str>),
-    ISP(u32, Box<str>),
-    DOMAIN(u32, Box<str>),
+    COUNTRY(u32, Option<Box<str>>, Option<Box<str>>),
+    REGION(u32, Option<Box<str>>),
+    CITY(u32, Option<Box<str>>),
+    ISP(u32, Option<Box<str>>),
+    DOMAIN(u32, Option<Box<str>>),
     // IP2Location
     LATITUDE(f32),
     LONGITUDE(f32),
-    ZIPCODE(u32, Box<str>),
-    TIMEZONE(u32, Box<str>),
-    NETSPEED(u32, Box<str>),
+    ZIPCODE(u32, Option<Box<str>>),
+    TIMEZONE(u32, Option<Box<str>>),
+    NETSPEED(u32, Option<Box<str>>),
     // IP2Proxy
-    PROXYTYPE(u32, Box<str>),
-    USAGETYPE(u32, Box<str>),
-    ASN(u32, Box<str>),
-    AS(u32, Box<str>),
-    LASTSEEN(u32, Box<str>),
-    THREAT(u32, Box<str>),
-    RESIDENTIAL(u32, Box<str>),
-    PROVIDER(u32, Box<str>),
+    PROXYTYPE(u32, Option<Box<str>>),
+    USAGETYPE(u32, Option<Box<str>>),
+    ASN(u32, Option<Box<str>>),
+    AS(u32, Option<Box<str>>),
+    LASTSEEN(u32, Option<Box<str>>),
+    THREAT(u32, Option<Box<str>>),
+    RESIDENTIAL(u32, Option<Box<str>>),
+    PROVIDER(u32, Option<Box<str>>),
 }
 
 #[derive(Debug, Clone)]
