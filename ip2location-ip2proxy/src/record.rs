@@ -3,7 +3,6 @@
 use std::net::IpAddr;
 
 use country_code::CountryCode;
-use ip2location_bin_format::content::UNKNOWN_STR;
 
 use crate::{proxy_type::ProxyType, usage_type::UsageType};
 
@@ -103,6 +102,7 @@ fn option_box_str_deserialize<'de, D>(deserializer: D) -> Result<Option<Box<str>
 where
     D: serde::Deserializer<'de>,
 {
+    use ip2location_bin_format::content::UNKNOWN_STR;
     use serde::Deserialize as _;
 
     let s = Box::<str>::deserialize(deserializer)?;
@@ -118,6 +118,7 @@ fn option_usize_deserialize<'de, D>(deserializer: D) -> Result<Option<usize>, D:
 where
     D: serde::Deserializer<'de>,
 {
+    use ip2location_bin_format::content::UNKNOWN_STR;
     use serde::Deserialize as _;
 
     let s = Box::<str>::deserialize(deserializer)?;
