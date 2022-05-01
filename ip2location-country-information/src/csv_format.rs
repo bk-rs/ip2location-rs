@@ -14,7 +14,7 @@ pub static RECORDS: once_cell::sync::Lazy<Records> = once_cell::sync::Lazy::new(
 
 #[cfg(feature = "once_cell")]
 pub static RECORDS_COUNTRY_CODE_MAP: once_cell::sync::Lazy<
-    std::collections::HashMap<Box<str>, Record>,
+    std::collections::HashMap<country_code::CountryCode, Record>,
 > = once_cell::sync::Lazy::new(|| {
     RECORDS
         .iter()
@@ -44,6 +44,7 @@ impl Records {
 
         for record in rdr.records() {
             let record = record.map_err(RecordsFromCsvError::CsvParseFailed)?;
+
             let row: Record = record
                 .deserialize(None)
                 .map_err(RecordsFromCsvError::RecordDeFailed)?;
