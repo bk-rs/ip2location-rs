@@ -28,7 +28,7 @@ default = ["tokio_fs", "serde"]
 tokio_fs = ["tokio", "async-compat"]
 async_fs = ["async-fs"]
 
-serde = ["dep:serde", "serde-enum-str", "serde-field-with"]
+serde = ["dep:serde", "serde-enum-str"]
 
 _integration_tests = ["tokio_fs", "serde"]
 
@@ -39,7 +39,6 @@ futures-util = { version = "0.3", default-features = false, features = ["std", "
 
 serde = { version = "1.0", default_features = false, features = ["std", "derive"], optional = true }
 serde-enum-str = { version = "0.2", default-features = false, optional = true }
-serde-field-with = { version = "0.1.2", default-features = false, features = ["std"], optional = true }
 
 tokio = { version = "1.17", default-features = false, features = ["fs"], optional = true }
 async-compat = { version = "0.2", default-features = false, optional = true }

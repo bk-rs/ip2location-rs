@@ -28,7 +28,7 @@ default = ["tokio_fs", "serde"]
 tokio_fs = ["tokio", "async-compat"]
 async_fs = ["async-fs"]
 
-serde = ["dep:serde", "serde-field-with"]
+serde = ["dep:serde"]
 
 _integration_tests = ["tokio_fs", "serde"]
 
@@ -38,7 +38,6 @@ ip2location-bin-format = { version = "0.1", default-features = false, features =
 futures-util = { version = "0.3", default-features = false, features = ["std", "io"] }
 
 serde = { version = "1.0", default_features = false, features = ["std", "derive"], optional = true }
-serde-field-with = { version = "0.1.2", default-features = false, features = ["std"], optional = true }
 
 tokio = { version = "1.17", default-features = false, features = ["fs"], optional = true }
 async-compat = { version = "0.2", default-features = false, optional = true }

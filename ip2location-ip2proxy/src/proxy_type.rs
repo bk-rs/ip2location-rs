@@ -2,7 +2,13 @@
 
 //
 #[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde_enum_str::Deserialize_enum_str))]
+#[cfg_attr(
+    feature = "serde",
+    derive(
+        serde_enum_str::Deserialize_enum_str,
+        serde_enum_str::Serialize_enum_str
+    )
+)]
 #[cfg_attr(feature = "serde", serde(rename_all = "UPPERCASE"))]
 pub enum ProxyType {
     VPN,
@@ -12,8 +18,6 @@ pub enum ProxyType {
     WEB,
     SES,
     RES,
-    #[cfg_attr(feature = "serde", serde(rename = "-"))]
-    Unknown,
     #[cfg_attr(feature = "serde", serde(other))]
     Other(Box<str>),
 }
@@ -31,8 +35,23 @@ impl core::str::FromStr for ProxyType {
             "WEB" => Ok(Self::WEB),
             "SES" => Ok(Self::SES),
             "RES" => Ok(Self::RES),
-            "-" => Ok(Self::Unknown),
             s => Ok(Self::Other(s.into())),
+        }
+    }
+}
+
+#[cfg(not(feature = "serde"))]
+impl core::fmt::Display for ProxyType {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::VPN => write!(f, "VPN"),
+            Self::TOR => write!(f, "TOR"),
+            Self::DCH => write!(f, "DCH"),
+            Self::PUB => write!(f, "PUB"),
+            Self::WEB => write!(f, "WEB"),
+            Self::SES => write!(f, "SES"),
+            Self::RES => write!(f, "RES"),
+            Self::Other(s) => write!(f, "{}", s),
         }
     }
 }

@@ -1,6 +1,5 @@
 //! [Ref](https://lite.ip2location.com/database/px11-ip-proxytype-country-region-city-isp-domain-usagetype-asn-lastseen-threat-residential-provider#database-fields)
 
-use core::{convert::Infallible, fmt, str::FromStr};
 use std::net::IpAddr;
 
 use crate::{proxy_type::ProxyType, usage_type::UsageType};
@@ -14,67 +13,63 @@ pub struct Record {
     #[cfg_attr(feature = "serde", serde(deserialize_with = "ip_deserialize"))]
     pub ip_to: IpAddr,
     pub proxy_type: Option<ProxyType>,
+    pub country_code: Box<str>,
     #[cfg_attr(
         feature = "serde",
-        serde(default, with = "serde_field_with::to_and_from_string")
+        serde(default, deserialize_with = "option_box_str_deserialize")
     )]
-    pub country_code: RecordValue,
+    pub country_name: Option<Box<str>>,
     #[cfg_attr(
         feature = "serde",
-        serde(default, with = "serde_field_with::to_and_from_string_option")
+        serde(default, deserialize_with = "option_box_str_deserialize")
     )]
-    pub country_name: Option<RecordValue>,
+    pub region_name: Option<Box<str>>,
     #[cfg_attr(
         feature = "serde",
-        serde(default, with = "serde_field_with::to_and_from_string_option")
+        serde(default, deserialize_with = "option_box_str_deserialize")
     )]
-    pub region_name: Option<RecordValue>,
+    pub city_name: Option<Box<str>>,
     #[cfg_attr(
         feature = "serde",
-        serde(default, with = "serde_field_with::to_and_from_string_option")
+        serde(default, deserialize_with = "option_box_str_deserialize")
     )]
-    pub city_name: Option<RecordValue>,
+    pub isp: Option<Box<str>>,
     #[cfg_attr(
         feature = "serde",
-        serde(default, with = "serde_field_with::to_and_from_string_option")
+        serde(default, deserialize_with = "option_box_str_deserialize")
     )]
-    pub isp: Option<RecordValue>,
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, with = "serde_field_with::to_and_from_string_option")
-    )]
-    pub domain: Option<RecordValue>,
+    pub domain: Option<Box<str>>,
     pub usage_type: Option<UsageType>,
     #[cfg_attr(
         feature = "serde",
-        serde(default, with = "serde_field_with::to_and_from_string_option")
+        serde(default, deserialize_with = "option_usize_deserialize")
     )]
-    pub asn: Option<RecordValue>,
+    pub asn: Option<usize>,
     #[cfg_attr(
         feature = "serde",
-        serde(default, with = "serde_field_with::to_and_from_string_option")
+        serde(default, deserialize_with = "option_box_str_deserialize")
     )]
-    pub as_name: Option<RecordValue>,
+    pub as_name: Option<Box<str>>,
     #[cfg_attr(
         feature = "serde",
-        serde(default, with = "serde_field_with::to_and_from_string_option")
+        serde(default, deserialize_with = "option_box_str_deserialize")
     )]
-    pub last_seen: Option<RecordValue>,
+    pub last_seen: Option<Box<str>>,
     #[cfg_attr(
         feature = "serde",
-        serde(default, with = "serde_field_with::to_and_from_string_option")
+        serde(default, deserialize_with = "option_box_str_deserialize")
     )]
-    pub threat: Option<RecordValue>,
+    pub threat: Option<Box<str>>,
     #[cfg_attr(
         feature = "serde",
-        serde(default, with = "serde_field_with::to_and_from_string_option")
+        serde(default, deserialize_with = "option_box_str_deserialize")
     )]
-    pub provider: Option<RecordValue>,
+    pub provider: Option<Box<str>>,
     #[cfg_attr(
         feature = "serde",
-        serde(default, with = "serde_field_with::to_and_from_string_option")
+        serde(default, deserialize_with = "option_box_str_deserialize")
     )]
-    pub residential: Option<RecordValue>,
+    pub residential: Option<Box<str>>,
 }
 
 #[cfg(feature = "serde")]
@@ -100,46 +95,36 @@ where
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum RecordValue {
-    String(Box<str>),
-    Usize(usize),
-    Unknown,
-}
+#[cfg(feature = "serde")]
+fn option_box_str_deserialize<'de, D>(deserializer: D) -> Result<Option<Box<str>>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::Deserialize as _;
 
-impl Default for RecordValue {
-    fn default() -> Self {
-        Self::Unknown
+    let s = Box::<str>::deserialize(deserializer)?;
+    if s == "-".into() {
+        Ok(None)
+    } else {
+        Ok(Some(s))
     }
 }
 
-impl FromStr for RecordValue {
-    type Err = Infallible;
+#[cfg(feature = "serde")]
+fn option_usize_deserialize<'de, D>(deserializer: D) -> Result<Option<usize>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::Deserialize as _;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s == "-" {
-            Ok(Self::Unknown)
-        } else if let Ok(v) = s.parse::<usize>() {
-            Ok(Self::Usize(v))
-        } else {
-            Ok(Self::String(s.into()))
+    let s = Box::<str>::deserialize(deserializer)?;
+    if s == "-".into() {
+        Ok(None)
+    } else {
+        match s.parse::<usize>() {
+            Ok(v) => Ok(Some(v)),
+            Err(err) => Err(serde::de::Error::custom(err.to_string())),
         }
-    }
-}
-
-impl fmt::Display for RecordValue {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            RecordValue::String(s) => write!(f, "{}", s),
-            RecordValue::Usize(v) => write!(f, "{}", v),
-            RecordValue::Unknown => write!(f, "-"),
-        }
-    }
-}
-
-impl RecordValue {
-    pub fn is_unknown(&self) -> bool {
-        matches!(self, Self::Unknown)
     }
 }
 
@@ -189,20 +174,20 @@ impl
         for record_field_content in record_field_contents.iter() {
             match record_field_content {
                 RecordFieldContent::COUNTRY(_, v, v_name) => {
-                    record.country_code = v.parse().expect("unreachable");
-                    record.country_name = Some(v_name.parse().expect("unreachable"));
+                    record.country_code = v.to_owned();
+                    record.country_name = Some(v_name.to_owned());
                 }
                 RecordFieldContent::REGION(_, v) => {
-                    record.region_name = Some(v.parse().expect("unreachable"));
+                    record.region_name = Some(v.to_owned());
                 }
                 RecordFieldContent::CITY(_, v) => {
-                    record.city_name = Some(v.parse().expect("unreachable"));
+                    record.city_name = Some(v.to_owned());
                 }
                 RecordFieldContent::ISP(_, v) => {
-                    record.isp = Some(v.parse().expect("unreachable"));
+                    record.isp = Some(v.to_owned());
                 }
                 RecordFieldContent::DOMAIN(_, v) => {
-                    record.domain = Some(v.parse().expect("unreachable"));
+                    record.domain = Some(v.to_owned());
                 }
                 //
                 RecordFieldContent::LATITUDE(_) => {
@@ -234,22 +219,25 @@ impl
                     record.usage_type = Some(v);
                 }
                 RecordFieldContent::ASN(_, v) => {
-                    record.asn = Some(v.parse().expect("unreachable"));
+                    let v = v
+                        .parse::<usize>()
+                        .map_err(|err| Box::<str>::from(err.to_string()))?;
+                    record.asn = Some(v);
                 }
                 RecordFieldContent::AS(_, v) => {
-                    record.as_name = Some(v.parse().expect("unreachable"));
+                    record.as_name = Some(v.to_owned());
                 }
                 RecordFieldContent::LASTSEEN(_, v) => {
-                    record.last_seen = Some(v.parse().expect("unreachable"));
+                    record.last_seen = Some(v.to_owned());
                 }
                 RecordFieldContent::THREAT(_, v) => {
-                    record.threat = Some(v.parse().expect("unreachable"));
+                    record.threat = Some(v.to_owned());
                 }
                 RecordFieldContent::RESIDENTIAL(_, v) => {
-                    record.residential = Some(v.parse().expect("unreachable"));
+                    record.residential = Some(v.to_owned());
                 }
                 RecordFieldContent::PROVIDER(_, v) => {
-                    record.provider = Some(v.parse().expect("unreachable"));
+                    record.provider = Some(v.to_owned());
                 }
             }
         }

@@ -1,6 +1,5 @@
 //! [Ref](https://lite.ip2location.com/database/db11-ip-country-region-city-latitude-longitude-zipcode-timezone#database-fields)
 
-use core::{convert::Infallible, fmt, str::FromStr};
 use std::net::IpAddr;
 
 //
@@ -11,53 +10,49 @@ pub struct Record {
     pub ip_from: IpAddr,
     #[cfg_attr(feature = "serde", serde(deserialize_with = "ip_deserialize"))]
     pub ip_to: IpAddr,
+    pub country_code: Box<str>,
     #[cfg_attr(
         feature = "serde",
-        serde(with = "serde_field_with::to_and_from_string")
+        serde(default, deserialize_with = "option_box_str_deserialize")
     )]
-    pub country_code: RecordValue,
+    pub country_name: Option<Box<str>>,
     #[cfg_attr(
         feature = "serde",
-        serde(default, with = "serde_field_with::to_and_from_string_option")
+        serde(default, deserialize_with = "option_box_str_deserialize")
     )]
-    pub country_name: Option<RecordValue>,
+    pub region_name: Option<Box<str>>,
     #[cfg_attr(
         feature = "serde",
-        serde(default, with = "serde_field_with::to_and_from_string_option")
+        serde(default, deserialize_with = "option_box_str_deserialize")
     )]
-    pub region_name: Option<RecordValue>,
-    #[cfg_attr(
-        feature = "serde",
-        serde(default, with = "serde_field_with::to_and_from_string_option")
-    )]
-    pub city_name: Option<RecordValue>,
+    pub city_name: Option<Box<str>>,
     pub latitude: Option<f32>,
     pub longitude: Option<f32>,
     #[cfg_attr(
         feature = "serde",
-        serde(default, with = "serde_field_with::to_and_from_string_option")
+        serde(default, deserialize_with = "option_box_str_deserialize")
     )]
-    pub zip_code: Option<RecordValue>,
+    pub zip_code: Option<Box<str>>,
     #[cfg_attr(
         feature = "serde",
-        serde(default, with = "serde_field_with::to_and_from_string_option")
+        serde(default, deserialize_with = "option_box_str_deserialize")
     )]
-    pub time_zone: Option<RecordValue>,
+    pub time_zone: Option<Box<str>>,
     #[cfg_attr(
         feature = "serde",
-        serde(default, with = "serde_field_with::to_and_from_string_option")
+        serde(default, deserialize_with = "option_box_str_deserialize")
     )]
-    pub isp: Option<RecordValue>,
+    pub isp: Option<Box<str>>,
     #[cfg_attr(
         feature = "serde",
-        serde(default, with = "serde_field_with::to_and_from_string_option")
+        serde(default, deserialize_with = "option_box_str_deserialize")
     )]
-    pub domain: Option<RecordValue>,
+    pub domain: Option<Box<str>>,
     #[cfg_attr(
         feature = "serde",
-        serde(default, with = "serde_field_with::to_and_from_string_option")
+        serde(default, deserialize_with = "option_box_str_deserialize")
     )]
-    pub net_speed: Option<RecordValue>,
+    pub net_speed: Option<Box<str>>,
 }
 
 #[cfg(feature = "serde")]
@@ -83,42 +78,18 @@ where
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum RecordValue {
-    String(Box<str>),
-    Unknown,
-}
+#[cfg(feature = "serde")]
+fn option_box_str_deserialize<'de, D>(deserializer: D) -> Result<Option<Box<str>>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::Deserialize as _;
 
-impl Default for RecordValue {
-    fn default() -> Self {
-        Self::Unknown
-    }
-}
-
-impl FromStr for RecordValue {
-    type Err = Infallible;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s == "-" {
-            Ok(Self::Unknown)
-        } else {
-            Ok(Self::String(s.into()))
-        }
-    }
-}
-
-impl fmt::Display for RecordValue {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            RecordValue::String(s) => write!(f, "{}", s),
-            RecordValue::Unknown => write!(f, "-"),
-        }
-    }
-}
-
-impl RecordValue {
-    pub fn is_unknown(&self) -> bool {
-        matches!(self, Self::Unknown)
+    let s = Box::<str>::deserialize(deserializer)?;
+    if s == "-".into() {
+        Ok(None)
+    } else {
+        Ok(Some(s))
     }
 }
 
@@ -165,20 +136,20 @@ impl
         for record_field_content in record_field_contents.iter() {
             match record_field_content {
                 RecordFieldContent::COUNTRY(_, v, v_name) => {
-                    record.country_code = v.parse().expect("unreachable");
-                    record.country_name = Some(v_name.parse().expect("unreachable"));
+                    record.country_code = v.to_owned();
+                    record.country_name = Some(v_name.to_owned());
                 }
                 RecordFieldContent::REGION(_, v) => {
-                    record.region_name = Some(v.parse().expect("unreachable"));
+                    record.region_name = Some(v.to_owned());
                 }
                 RecordFieldContent::CITY(_, v) => {
-                    record.city_name = Some(v.parse().expect("unreachable"));
+                    record.city_name = Some(v.to_owned());
                 }
                 RecordFieldContent::ISP(_, v) => {
-                    record.isp = Some(v.parse().expect("unreachable"));
+                    record.isp = Some(v.to_owned());
                 }
                 RecordFieldContent::DOMAIN(_, v) => {
-                    record.domain = Some(v.parse().expect("unreachable"));
+                    record.domain = Some(v.to_owned());
                 }
                 //
                 RecordFieldContent::LATITUDE(v) => {
@@ -188,13 +159,13 @@ impl
                     record.longitude = Some(*v);
                 }
                 RecordFieldContent::ZIPCODE(_, v) => {
-                    record.zip_code = Some(v.parse().expect("unreachable"));
+                    record.zip_code = Some(v.to_owned());
                 }
                 RecordFieldContent::TIMEZONE(_, v) => {
-                    record.time_zone = Some(v.parse().expect("unreachable"));
+                    record.time_zone = Some(v.to_owned());
                 }
                 RecordFieldContent::NETSPEED(_, v) => {
-                    record.net_speed = Some(v.parse().expect("unreachable"));
+                    record.net_speed = Some(v.to_owned());
                 }
                 //
                 RecordFieldContent::PROXYTYPE(_, _) => {

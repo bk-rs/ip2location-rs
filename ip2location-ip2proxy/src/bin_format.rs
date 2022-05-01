@@ -110,14 +110,9 @@ where
             .await
             .map_err(DatabaseLookupError::QuerierLookupError)?
         {
-            Some(x) => {
-                let record = Record::try_from(x).map_err(DatabaseLookupError::ToRecordFailed)?;
-                if record.country_code.is_unknown() {
-                    Ok(None)
-                } else {
-                    Ok(Some(record))
-                }
-            }
+            Some(x) => Ok(Some(
+                Record::try_from(x).map_err(DatabaseLookupError::ToRecordFailed)?,
+            )),
             None => Ok(None),
         }
     }
@@ -140,14 +135,9 @@ where
             .await
             .map_err(DatabaseLookupError::QuerierLookupError)?
         {
-            Some(x) => {
-                let record = Record::try_from(x).map_err(DatabaseLookupError::ToRecordFailed)?;
-                if record.country_code.is_unknown() {
-                    Ok(None)
-                } else {
-                    Ok(Some(record))
-                }
-            }
+            Some(x) => Ok(Some(
+                Record::try_from(x).map_err(DatabaseLookupError::ToRecordFailed)?,
+            )),
             None => Ok(None),
         }
     }

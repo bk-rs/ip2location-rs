@@ -2,7 +2,13 @@
 
 //
 #[derive(Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde_enum_str::Deserialize_enum_str))]
+#[cfg_attr(
+    feature = "serde",
+    derive(
+        serde_enum_str::Deserialize_enum_str,
+        serde_enum_str::Serialize_enum_str
+    )
+)]
 #[cfg_attr(feature = "serde", serde(rename_all = "UPPERCASE"))]
 pub enum UsageType {
     COM,
@@ -17,8 +23,6 @@ pub enum UsageType {
     DCH,
     SES,
     RSV,
-    #[cfg_attr(feature = "serde", serde(rename = "-"))]
-    Unknown,
     #[cfg_attr(feature = "serde", serde(other))]
     Other(Box<str>),
 }
@@ -41,8 +45,28 @@ impl core::str::FromStr for UsageType {
             "DCH" => Ok(Self::DCH),
             "SES" => Ok(Self::SES),
             "RSV" => Ok(Self::RSV),
-            "-" => Ok(Self::Unknown),
             s => Ok(Self::Other(s.into())),
+        }
+    }
+}
+
+#[cfg(not(feature = "serde"))]
+impl core::fmt::Display for UsageType {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::COM => write!(f, "COM"),
+            Self::ORG => write!(f, "ORG"),
+            Self::GOV => write!(f, "GOV"),
+            Self::MIL => write!(f, "MIL"),
+            Self::EDU => write!(f, "EDU"),
+            Self::LIB => write!(f, "LIB"),
+            Self::CDN => write!(f, "CDN"),
+            Self::ISP => write!(f, "ISP"),
+            Self::MOB => write!(f, "MOB"),
+            Self::DCH => write!(f, "DCH"),
+            Self::SES => write!(f, "SES"),
+            Self::RSV => write!(f, "RSV"),
+            Self::Other(s) => write!(f, "{}", s),
         }
     }
 }
