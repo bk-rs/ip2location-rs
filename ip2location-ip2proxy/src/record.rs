@@ -2,6 +2,8 @@
 
 use std::net::IpAddr;
 
+use country_code::CountryCode;
+
 use crate::{proxy_type::ProxyType, usage_type::UsageType};
 
 //
@@ -13,7 +15,7 @@ pub struct Record {
     #[cfg_attr(feature = "serde", serde(deserialize_with = "ip_deserialize"))]
     pub ip_to: IpAddr,
     pub proxy_type: Option<ProxyType>,
-    pub country_code: Box<str>,
+    pub country_code: CountryCode,
     #[cfg_attr(
         feature = "serde",
         serde(default, deserialize_with = "option_box_str_deserialize")
@@ -178,7 +180,9 @@ impl
             match record_field_content {
                 RecordFieldContent::COUNTRY(_, v, v_name) => {
                     if let Some(v) = v {
-                        record.country_code = v.to_owned();
+                        record.country_code = v
+                            .parse::<CountryCode>()
+                            .map_err(|err| Box::<str>::from(err.to_string()))?;
                     } else {
                         return Ok(OptionRecord(None));
                     }

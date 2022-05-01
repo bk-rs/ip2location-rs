@@ -3,6 +3,8 @@
 use core::ops::Deref;
 use std::net::IpAddr;
 
+use country_code::CountryCode as CountryCodeInner;
+
 //
 #[cfg_attr(feature = "serde", derive(serde::Deserialize))]
 #[derive(Debug, Clone)]
@@ -85,16 +87,16 @@ where
 
 //
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct CountryCode(pub Box<str>);
+pub struct CountryCode(pub CountryCodeInner);
 
 impl Default for CountryCode {
     fn default() -> Self {
-        Self("".into())
+        Self(CountryCodeInner::Other("".into()))
     }
 }
 
 impl Deref for CountryCode {
-    type Target = Box<str>;
+    type Target = CountryCodeInner;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -103,7 +105,7 @@ impl Deref for CountryCode {
 
 impl CountryCode {
     pub fn is_default(&self) -> bool {
-        self.0 == "".into()
+        self.0 == CountryCodeInner::Other("".into())
     }
 }
 
@@ -118,7 +120,9 @@ where
     if s == "-".into() {
         Ok(CountryCode::default())
     } else {
-        Ok(CountryCode(s))
+        Ok(CountryCode(s.parse::<CountryCodeInner>().map_err(
+            |err| serde::de::Error::custom(err.to_string()),
+        )?))
     }
 }
 
@@ -184,7 +188,10 @@ impl
             match record_field_content {
                 RecordFieldContent::COUNTRY(_, v, v_name) => {
                     if let Some(v) = v {
-                        record.country_code = CountryCode(v.to_owned());
+                        record.country_code = CountryCode(
+                            v.parse::<CountryCodeInner>()
+                                .map_err(|err| Box::from(err.to_string()))?,
+                        );
                     } else {
                         return Ok(OptionRecord(None));
                     }
