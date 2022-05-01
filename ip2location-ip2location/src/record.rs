@@ -4,6 +4,7 @@ use core::ops::Deref;
 use std::net::IpAddr;
 
 use country_code::CountryCode as CountryCodeInner;
+use ip2location_bin_format::content::UNKNOWN_STR;
 
 //
 #[cfg_attr(feature = "serde", derive(serde::Deserialize))]
@@ -117,7 +118,7 @@ where
     use serde::Deserialize as _;
 
     let s = Box::<str>::deserialize(deserializer)?;
-    if s == "-".into() {
+    if s == UNKNOWN_STR.into() {
         Ok(CountryCode::default())
     } else {
         Ok(CountryCode(s.parse::<CountryCodeInner>().map_err(
@@ -134,7 +135,7 @@ where
     use serde::Deserialize as _;
 
     let s = Box::<str>::deserialize(deserializer)?;
-    if s == "-".into() {
+    if s == UNKNOWN_STR.into() {
         Ok(None)
     } else {
         Ok(Some(s))

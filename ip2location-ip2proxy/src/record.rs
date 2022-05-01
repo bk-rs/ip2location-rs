@@ -3,6 +3,7 @@
 use std::net::IpAddr;
 
 use country_code::CountryCode;
+use ip2location_bin_format::content::UNKNOWN_STR;
 
 use crate::{proxy_type::ProxyType, usage_type::UsageType};
 
@@ -105,7 +106,7 @@ where
     use serde::Deserialize as _;
 
     let s = Box::<str>::deserialize(deserializer)?;
-    if s == "-".into() {
+    if s == UNKNOWN_STR.into() {
         Ok(None)
     } else {
         Ok(Some(s))
@@ -120,7 +121,7 @@ where
     use serde::Deserialize as _;
 
     let s = Box::<str>::deserialize(deserializer)?;
-    if s == "-".into() {
+    if s == UNKNOWN_STR.into() {
         Ok(None)
     } else {
         match s.parse::<usize>() {

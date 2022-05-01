@@ -6,7 +6,10 @@ use std::{
 
 use futures_util::{AsyncRead, AsyncReadExt as _, AsyncSeek, AsyncSeekExt as _};
 
-use crate::record_field::{RecordFieldContent, RecordFieldContents};
+use crate::{
+    content::UNKNOWN_STR,
+    record_field::{RecordFieldContent, RecordFieldContents},
+};
 
 //
 pub const COUNTRY_NAME_INDEX_OFFSET: usize = 3;
@@ -324,7 +327,7 @@ where
 
 fn filter_str(s: impl AsRef<str>) -> Option<Box<str>> {
     let s = s.as_ref();
-    if s == "-" {
+    if s == UNKNOWN_STR {
         None
     } else {
         Some(s.into())
