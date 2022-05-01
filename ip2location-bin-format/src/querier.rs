@@ -191,7 +191,7 @@ where
         };
 
         let records_v4_pool = {
-            let pool = Pool::new(pool_max_size);
+            let mut pool_objs = vec![];
 
             for _ in 0..pool_max_size {
                 let mut stream = stream_repeater().await.map_err(NewError::OpenFailed)?;
@@ -209,23 +209,20 @@ where
                 }
 
                 //
-                let obj = RecordsV4Querier::new(stream, header)
+                let pool_obj = RecordsV4Querier::new(stream, header)
                     .map_err(NewError::RecordsV4QuerierNewFailed)?;
 
-                match pool.add(obj).await {
-                    Ok(_) => {}
-                    Err((_, err)) => return Err(NewError::PoolAddFailed(err)),
-                }
+                pool_objs.push(pool_obj);
             }
 
-            pool
+            Pool::from(pool_objs)
         };
 
         let mut records_v6_pool = None;
         #[allow(clippy::unnecessary_operation)]
         {
             if header.has_v6() {
-                let pool = Pool::new(pool_max_size);
+                let mut pool_objs = vec![];
 
                 for _ in 0..pool_max_size {
                     let mut stream = stream_repeater().await.map_err(NewError::OpenFailed)?;
@@ -243,21 +240,18 @@ where
                     }
 
                     //
-                    let obj = RecordsV6Querier::new(stream, header)
+                    let pool_obj = RecordsV6Querier::new(stream, header)
                         .map_err(NewError::RecordsV6QuerierNewFailed)?;
 
-                    match pool.add(obj).await {
-                        Ok(_) => {}
-                        Err((_, err)) => return Err(NewError::PoolAddFailed(err)),
-                    }
+                    pool_objs.push(pool_obj);
                 }
 
-                records_v6_pool = Some(pool)
+                records_v6_pool = Some(Pool::from(pool_objs))
             }
         };
 
         let content_pool = {
-            let pool = Pool::new(pool_max_size);
+            let mut pool_objs = vec![];
 
             for _ in 0..pool_max_size {
                 let mut stream = stream_repeater().await.map_err(NewError::OpenFailed)?;
@@ -275,15 +269,12 @@ where
                 }
 
                 //
-                let obj = ContentQuerier::new(stream);
+                let pool_obj = ContentQuerier::new(stream);
 
-                match pool.add(obj).await {
-                    Ok(_) => {}
-                    Err((_, err)) => return Err(NewError::PoolAddFailed(err)),
-                }
+                pool_objs.push(pool_obj);
             }
 
-            pool
+            Pool::from(pool_objs)
         };
 
         //
@@ -309,7 +300,6 @@ pub enum NewError {
     TotalSizeMissing,
     IndexV4BuildFailed(IndexBuildError),
     IndexV6BuildFailed(IndexBuildError),
-    PoolAddFailed(PoolError),
     RecordsV4QuerierNewFailed(RecordsV4QuerierNewError),
     RecordsV6QuerierNewFailed(RecordsV6QuerierNewError),
 }
