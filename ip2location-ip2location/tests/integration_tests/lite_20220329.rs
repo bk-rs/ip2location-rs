@@ -26,10 +26,10 @@ async fn test_db11() -> Result<(), Box<dyn error::Error>> {
     let header = StringRecord::from(CSV_HEADER_DB11);
 
     //
-    let mut db_v4 = Database::<TokioFile>::new(path_bin_v4).await?;
+    let db_v4 = Database::<TokioFile>::new(path_bin_v4, 2).await?;
     println!("{:?}", db_v4.inner.header);
 
-    let mut db_v6 = Database::<TokioFile>::new(path_bin_v6).await?;
+    let db_v6 = Database::<TokioFile>::new(path_bin_v6, 2).await?;
     println!("{:?}", db_v6.inner.header);
 
     //

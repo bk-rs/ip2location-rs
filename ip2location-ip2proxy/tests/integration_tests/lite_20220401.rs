@@ -25,7 +25,7 @@ async fn test_px11() -> Result<(), Box<dyn error::Error>> {
     let header = StringRecord::from(CSV_HEADER_PX11);
 
     //
-    let mut db = Database::<TokioFile>::new(path_bin).await?;
+    let db = Database::<TokioFile>::new(path_bin, 2).await?;
     println!("{:?}", db.inner.header);
 
     //

@@ -4,6 +4,7 @@ use std::{
     net::{IpAddr, Ipv4Addr, Ipv6Addr},
 };
 
+use deadpool::unmanaged::{Pool, PoolError};
 use futures_util::{AsyncRead, AsyncReadExt as _, AsyncSeek, AsyncSeekExt as _};
 
 use crate::{
@@ -26,14 +27,31 @@ use crate::{
 };
 
 //
-#[derive(Debug)]
 pub struct Querier<S> {
     pub header: HeaderSchema,
     pub index_v4: IndexV4Querier,
     pub index_v6: Option<IndexV6Querier>,
-    pub records_v4: RecordsV4Querier<S>,
-    pub records_v6: Option<RecordsV6Querier<S>>,
-    pub content: ContentQuerier<S>,
+    pub records_v4_pool: Pool<RecordsV4Querier<S>>,
+    pub records_v6_pool: Option<Pool<RecordsV6Querier<S>>>,
+    pub content_pool: Pool<ContentQuerier<S>>,
+}
+
+impl<S> fmt::Debug for Querier<S>
+where
+    Pool<RecordsV4Querier<S>>: fmt::Debug,
+    Option<Pool<RecordsV6Querier<S>>>: fmt::Debug,
+    Pool<ContentQuerier<S>>: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Querier")
+            .field("header", &self.header)
+            .field("index_v4", &self.index_v4)
+            .field("index_v6", &self.index_v6)
+            .field("records_v4_pool", &self.records_v4_pool)
+            .field("records_v6_pool", &self.records_v6_pool)
+            .field("content_pool", &self.content_pool)
+            .finish()
+    }
 }
 
 //
@@ -43,7 +61,7 @@ impl<S> Querier<S>
 where
     S: AsyncSeek + AsyncRead + Unpin,
 {
-    pub async fn new<F>(mut stream_repeater: F) -> Result<Self, NewError>
+    pub async fn new<F>(mut stream_repeater: F, pool_max_size: usize) -> Result<Self, NewError>
     where
         F: FnMut() -> Pin<Box<dyn Future<Output = Result<S, IoError>> + Send + 'static>>,
     {
@@ -172,29 +190,10 @@ where
             }
         };
 
-        let records_v4 = {
-            let mut stream = stream_repeater().await.map_err(NewError::OpenFailed)?;
+        let records_v4_pool = {
+            let pool = Pool::new(pool_max_size);
 
-            stream
-                .seek(SeekFrom::Start(header.total_size as u64))
-                .await
-                .map_err(NewError::SeekFailed)?;
-            let n = stream
-                .read(&mut buf[..1])
-                .await
-                .map_err(NewError::ReadFailed)?;
-            if n != 0 {
-                return Err(NewError::TotalSizeMissing);
-            }
-
-            //
-            RecordsV4Querier::new(stream, header).map_err(NewError::RecordsV4QuerierNewFailed)?
-        };
-
-        let mut records_v6 = None;
-        #[allow(clippy::unnecessary_operation)]
-        {
-            if header.has_v6() {
+            for _ in 0..pool_max_size {
                 let mut stream = stream_repeater().await.map_err(NewError::OpenFailed)?;
 
                 stream
@@ -210,30 +209,81 @@ where
                 }
 
                 //
-                let records_v6_tmp = RecordsV6Querier::new(stream, header)
-                    .map_err(NewError::RecordsV6QuerierNewFailed)?;
+                let obj = RecordsV4Querier::new(stream, header)
+                    .map_err(NewError::RecordsV4QuerierNewFailed)?;
 
-                records_v6 = Some(records_v6_tmp);
+                match pool.add(obj).await {
+                    Ok(_) => {}
+                    Err((_, err)) => return Err(NewError::PoolAddFailed(err)),
+                }
+            }
+
+            pool
+        };
+
+        let mut records_v6_pool = None;
+        #[allow(clippy::unnecessary_operation)]
+        {
+            if header.has_v6() {
+                let pool = Pool::new(pool_max_size);
+
+                for _ in 0..pool_max_size {
+                    let mut stream = stream_repeater().await.map_err(NewError::OpenFailed)?;
+
+                    stream
+                        .seek(SeekFrom::Start(header.total_size as u64))
+                        .await
+                        .map_err(NewError::SeekFailed)?;
+                    let n = stream
+                        .read(&mut buf[..1])
+                        .await
+                        .map_err(NewError::ReadFailed)?;
+                    if n != 0 {
+                        return Err(NewError::TotalSizeMissing);
+                    }
+
+                    //
+                    let obj = RecordsV6Querier::new(stream, header)
+                        .map_err(NewError::RecordsV6QuerierNewFailed)?;
+
+                    match pool.add(obj).await {
+                        Ok(_) => {}
+                        Err((_, err)) => return Err(NewError::PoolAddFailed(err)),
+                    }
+                }
+
+                records_v6_pool = Some(pool)
             }
         };
 
-        let content = {
-            let mut stream = stream_repeater().await.map_err(NewError::OpenFailed)?;
+        let content_pool = {
+            let pool = Pool::new(pool_max_size);
 
-            stream
-                .seek(SeekFrom::Start(header.total_size as u64))
-                .await
-                .map_err(NewError::SeekFailed)?;
-            let n = stream
-                .read(&mut buf[..1])
-                .await
-                .map_err(NewError::ReadFailed)?;
-            if n != 0 {
-                return Err(NewError::TotalSizeMissing);
+            for _ in 0..pool_max_size {
+                let mut stream = stream_repeater().await.map_err(NewError::OpenFailed)?;
+
+                stream
+                    .seek(SeekFrom::Start(header.total_size as u64))
+                    .await
+                    .map_err(NewError::SeekFailed)?;
+                let n = stream
+                    .read(&mut buf[..1])
+                    .await
+                    .map_err(NewError::ReadFailed)?;
+                if n != 0 {
+                    return Err(NewError::TotalSizeMissing);
+                }
+
+                //
+                let obj = ContentQuerier::new(stream);
+
+                match pool.add(obj).await {
+                    Ok(_) => {}
+                    Err((_, err)) => return Err(NewError::PoolAddFailed(err)),
+                }
             }
 
-            //
-            ContentQuerier::new(stream)
+            pool
         };
 
         //
@@ -241,9 +291,9 @@ where
             header,
             index_v4,
             index_v6,
-            records_v4,
-            records_v6,
-            content,
+            records_v4_pool,
+            records_v6_pool,
+            content_pool,
         })
     }
 }
@@ -259,6 +309,7 @@ pub enum NewError {
     TotalSizeMissing,
     IndexV4BuildFailed(IndexBuildError),
     IndexV6BuildFailed(IndexBuildError),
+    PoolAddFailed(PoolError),
     RecordsV4QuerierNewFailed(RecordsV4QuerierNewError),
     RecordsV6QuerierNewFailed(RecordsV6QuerierNewError),
 }
@@ -279,7 +330,7 @@ where
     S: AsyncSeek + AsyncRead + Unpin,
 {
     pub async fn lookup(
-        &mut self,
+        &self,
         ip: IpAddr,
         selected_fields: Option<&[RecordField]>,
     ) -> Result<Option<(IpAddr, IpAddr, RecordFieldContents)>, LookupError> {
@@ -290,7 +341,7 @@ where
     }
 
     pub async fn lookup_ipv4(
-        &mut self,
+        &self,
         ip: Ipv4Addr,
         selected_fields: Option<&[RecordField]>,
     ) -> Result<Option<(IpAddr, IpAddr, RecordFieldContents)>, LookupError> {
@@ -300,8 +351,13 @@ where
             return Ok(None);
         }
 
-        let (ip_from, ip_to, mut record_field_contents) = match self
-            .records_v4
+        //
+        let mut records_v4 = self
+            .records_v4_pool
+            .get()
+            .await
+            .map_err(LookupError::PoolGetFailed)?;
+        let (ip_from, ip_to, mut record_field_contents) = match records_v4
             .query(ip, position_range)
             .await
             .map_err(LookupError::RecordsQueryFailed)?
@@ -314,7 +370,14 @@ where
             record_field_contents.select(selected_fields);
         }
 
-        self.content
+        //
+        let mut content = self
+            .content_pool
+            .get()
+            .await
+            .map_err(LookupError::PoolGetFailed)?;
+
+        content
             .fill(&mut record_field_contents)
             .await
             .map_err(LookupError::ContentFillFailed)?;
@@ -323,7 +386,7 @@ where
     }
 
     pub async fn lookup_ipv6(
-        &mut self,
+        &self,
         ip: Ipv6Addr,
         selected_fields: Option<&[RecordField]>,
     ) -> Result<Option<(IpAddr, IpAddr, RecordFieldContents)>, LookupError> {
@@ -361,8 +424,14 @@ where
             return Ok(None);
         }
 
-        let (ip_from, ip_to, mut record_field_contents) = match self.records_v6.as_mut() {
-            Some(records_v6) => {
+        let (ip_from, ip_to, mut record_field_contents) = match self.records_v6_pool.as_ref() {
+            Some(records_v6_pool) => {
+                //
+                let mut records_v6 = records_v6_pool
+                    .get()
+                    .await
+                    .map_err(LookupError::PoolGetFailed)?;
+
                 match records_v6
                     .query(ip, position_range)
                     .await
@@ -379,7 +448,14 @@ where
             record_field_contents.select(selected_fields);
         }
 
-        self.content
+        //
+        let mut content = self
+            .content_pool
+            .get()
+            .await
+            .map_err(LookupError::PoolGetFailed)?;
+
+        content
             .fill(&mut record_field_contents)
             .await
             .map_err(LookupError::ContentFillFailed)?;
@@ -391,6 +467,7 @@ where
 //
 #[derive(Debug)]
 pub enum LookupError {
+    PoolGetFailed(PoolError),
     RecordsQueryFailed(RecordsQueryError),
     ContentFillFailed(ContentFillError),
 }
@@ -428,9 +505,11 @@ mod tests {
         ];
 
         for path in ip2location_bin_files().iter() {
-            let mut q =
-                Querier::new(|| Box::pin(TokioFile::open(path.clone()).map_ok(Compat::new)))
-                    .await?;
+            let q = Querier::new(
+                || Box::pin(TokioFile::open(path.clone()).map_ok(Compat::new)),
+                2,
+            )
+            .await?;
 
             for ip in ips {
                 let ret = q.lookup(*ip, None).await?;
@@ -463,9 +542,11 @@ mod tests {
         }
 
         for path in ip2proxy_bin_files().iter() {
-            let mut q =
-                Querier::new(|| Box::pin(TokioFile::open(path.clone()).map_ok(Compat::new)))
-                    .await?;
+            let q = Querier::new(
+                || Box::pin(TokioFile::open(path.clone()).map_ok(Compat::new)),
+                2,
+            )
+            .await?;
 
             for ip in ips {
                 let ret = q.lookup(*ip, None).await?;

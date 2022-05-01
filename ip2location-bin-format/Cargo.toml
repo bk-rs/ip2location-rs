@@ -27,6 +27,8 @@ default = ["chrono", "lru"]
 [dependencies]
 futures-util = { version = "0.3", default-features = false, features = ["std", "io"] }
 
+deadpool = { version = "0.9", default-features = false, features = ["unmanaged"] }
+
 chrono = { version = "0.4", default-features = false, optional = true }
 lru = { version = "0.7", default-features = false, features = ["hashbrown"], optional = true }
 

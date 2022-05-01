@@ -16,21 +16,35 @@ use ip2location_bin_format::querier::{
 use crate::record::{OptionRecord, Record, RecordField};
 
 //
-#[derive(Debug)]
 pub struct Database<S> {
     pub inner: Querier<S>,
 }
 
+impl<S> fmt::Debug for Database<S>
+where
+    Querier<S>: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Database")
+            .field("inner", &self.inner)
+            .finish()
+    }
+}
+
 #[cfg(feature = "tokio_fs")]
 impl Database<async_compat::Compat<tokio::fs::File>> {
-    pub async fn new(path: impl AsRef<std::path::Path>) -> Result<Self, DatabaseNewError> {
+    pub async fn new(
+        path: impl AsRef<std::path::Path>,
+        pool_max_size: usize,
+    ) -> Result<Self, DatabaseNewError> {
         use futures_util::TryFutureExt as _;
 
         let path = path.as_ref().to_owned();
 
-        let inner = Querier::new(|| {
-            Box::pin(tokio::fs::File::open(path.clone()).map_ok(async_compat::Compat::new))
-        })
+        let inner = Querier::new(
+            || Box::pin(tokio::fs::File::open(path.clone()).map_ok(async_compat::Compat::new)),
+            pool_max_size,
+        )
         .await
         .map_err(DatabaseNewError::QuerierNewError)?;
 
@@ -44,12 +58,18 @@ impl Database<async_compat::Compat<tokio::fs::File>> {
 
 #[cfg(feature = "async_fs")]
 impl Database<async_fs::File> {
-    pub async fn new(path: impl AsRef<std::path::Path>) -> Result<Self, DatabaseNewError> {
+    pub async fn new(
+        path: impl AsRef<std::path::Path>,
+        pool_max_size: usize,
+    ) -> Result<Self, DatabaseNewError> {
         let path = path.as_ref().to_owned();
 
-        let inner = Querier::new(|| Box::pin(async_fs::File::open(path.clone())))
-            .await
-            .map_err(DatabaseNewError::QuerierNewError)?;
+        let inner = Querier::new(
+            || Box::pin(async_fs::File::open(path.clone())),
+            pool_max_size,
+        )
+        .await
+        .map_err(DatabaseNewError::QuerierNewError)?;
 
         if !inner.header.r#type.is_ip2proxy() {
             return Err(DatabaseNewError::TypeMismatch);
@@ -82,7 +102,7 @@ where
     S: AsyncSeek + AsyncRead + Unpin,
 {
     pub async fn lookup(
-        &mut self,
+        &self,
         ip: IpAddr,
         selected_fields: impl Into<Option<&[RecordField]>>,
     ) -> Result<Option<Record>, DatabaseLookupError> {
@@ -93,7 +113,7 @@ where
     }
 
     pub async fn lookup_ipv4(
-        &mut self,
+        &self,
         ip: Ipv4Addr,
         selected_fields: impl Into<Option<&[RecordField]>>,
     ) -> Result<Option<Record>, DatabaseLookupError> {
@@ -118,7 +138,7 @@ where
     }
 
     pub async fn lookup_ipv6(
-        &mut self,
+        &self,
         ip: Ipv6Addr,
         selected_fields: impl Into<Option<&[RecordField]>>,
     ) -> Result<Option<Record>, DatabaseLookupError> {
@@ -169,7 +189,7 @@ mod tests {
     async fn test_new_and_lookup_20220401() -> Result<(), Box<dyn error::Error>> {
         let path_bin = "data/ip2proxy-lite/20220401/IP2PROXY-LITE-PX11.BIN";
 
-        let mut db = match Database::<TokioFile>::new(path_bin).await {
+        let db = match Database::<TokioFile>::new(path_bin, 1).await {
             Ok(x) => Some(x),
             Err(DatabaseNewError::QuerierNewError(QuerierNewError::OpenFailed(err)))
                 if err.kind() == IoErrorKind::NotFound =>
@@ -179,7 +199,7 @@ mod tests {
             Err(err) => panic!("{:?}", err),
         };
 
-        if let Some(db) = db.as_mut() {
+        if let Some(db) = db {
             let record_1 = db
                 .lookup(Ipv4Addr::from(16778241).into(), None)
                 .await?

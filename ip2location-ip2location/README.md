@@ -15,7 +15,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let runtime = tokio::runtime::Runtime::new().unwrap();
 
     runtime.block_on(async move {
-        let mut db = Database::<TokioFile>::new("/path/IP2LOCATION-LITE-DB11.BIN").await?;
+        let db = Database::<TokioFile>::new("/path/IP2LOCATION-LITE-DB11.BIN", 2).await?;
 
         if let Some(record) = db.lookup_ipv4(Ipv4Addr::new(8, 8, 8, 8), None).await? {
             assert_eq!(record.country_code.to_string(), "US");
