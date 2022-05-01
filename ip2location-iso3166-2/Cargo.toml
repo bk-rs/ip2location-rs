@@ -26,4 +26,6 @@ default = ["once_cell"]
 serde = { version = "1.0", default_features = false, features = ["std", "derive"] }
 csv = { version = "1.1", default_features = false }
 
+country-code = { version = "0.2.1", default-features = false, features = ["std", "serde"] }
+
 once_cell = { version = "1.10", default_features = false, features = ["std"], optional = true }

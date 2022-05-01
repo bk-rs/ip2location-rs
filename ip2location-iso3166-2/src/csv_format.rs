@@ -1,7 +1,7 @@
 use core::{fmt, ops::Deref};
 use std::io::Read;
 
-use csv::{Error as CsvError, Reader};
+use csv::{Error as CsvError, Reader, StringRecord};
 
 use crate::record::Record;
 
@@ -13,14 +13,15 @@ pub static RECORDS: once_cell::sync::Lazy<Records> = once_cell::sync::Lazy::new(
 });
 
 #[cfg(feature = "once_cell")]
-pub static RECORDS_CODE_MAP: once_cell::sync::Lazy<std::collections::HashMap<Box<str>, Record>> =
-    once_cell::sync::Lazy::new(|| {
-        RECORDS
-            .iter()
-            .cloned()
-            .map(|x| (x.code.to_owned(), x))
-            .collect()
-    });
+pub static RECORDS_CODE_MAP: once_cell::sync::Lazy<
+    std::collections::HashMap<country_code::iso3166_2::SubdivisionCode, Record>,
+> = once_cell::sync::Lazy::new(|| {
+    RECORDS
+        .iter()
+        .cloned()
+        .map(|x| (x.code.to_owned(), x))
+        .collect()
+});
 
 //
 #[derive(Debug, Clone)]
@@ -43,6 +44,20 @@ impl Records {
 
         for record in rdr.records() {
             let record = record.map_err(RecordsFromCsvError::CsvParseFailed)?;
+
+            /*
+            LINE: "AI","Anguilla","-"
+            */
+            let record = if record.get(2) == Some("-") {
+                StringRecord::from(vec![
+                    &record[0],
+                    &record[1],
+                    format!("{}-", &record[0]).as_str(),
+                ])
+            } else {
+                record
+            };
+
             let row: Record = record
                 .deserialize(None)
                 .map_err(RecordsFromCsvError::RecordDeFailed)?;
