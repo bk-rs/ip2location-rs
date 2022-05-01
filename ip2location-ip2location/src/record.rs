@@ -1,5 +1,6 @@
 //! [Ref](https://lite.ip2location.com/database/db11-ip-country-region-city-latitude-longitude-zipcode-timezone#database-fields)
 
+use core::ops::Deref;
 use std::net::IpAddr;
 
 //
@@ -10,7 +11,11 @@ pub struct Record {
     pub ip_from: IpAddr,
     #[cfg_attr(feature = "serde", serde(deserialize_with = "ip_deserialize"))]
     pub ip_to: IpAddr,
-    pub country_code: Box<str>,
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, deserialize_with = "country_code_deserialize")
+    )]
+    pub country_code: CountryCode,
     #[cfg_attr(
         feature = "serde",
         serde(default, deserialize_with = "option_box_str_deserialize")
@@ -78,6 +83,45 @@ where
     }
 }
 
+//
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct CountryCode(pub Box<str>);
+
+impl Default for CountryCode {
+    fn default() -> Self {
+        Self("".into())
+    }
+}
+
+impl Deref for CountryCode {
+    type Target = Box<str>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl CountryCode {
+    pub fn is_default(&self) -> bool {
+        self.0 == "".into()
+    }
+}
+
+#[cfg(feature = "serde")]
+fn country_code_deserialize<'de, D>(deserializer: D) -> Result<CountryCode, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::Deserialize as _;
+
+    let s = Box::<str>::deserialize(deserializer)?;
+    if s == "-".into() {
+        Ok(CountryCode::default())
+    } else {
+        Ok(CountryCode(s))
+    }
+}
+
 #[cfg(feature = "serde")]
 fn option_box_str_deserialize<'de, D>(deserializer: D) -> Result<Option<Box<str>>, D::Error>
 where
@@ -140,7 +184,7 @@ impl
             match record_field_content {
                 RecordFieldContent::COUNTRY(_, v, v_name) => {
                     if let Some(v) = v {
-                        record.country_code = v.to_owned();
+                        record.country_code = CountryCode(v.to_owned());
                     } else {
                         return Ok(OptionRecord(None));
                     }

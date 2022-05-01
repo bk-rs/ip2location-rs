@@ -46,7 +46,23 @@ async fn test_db11() -> Result<(), Box<dyn error::Error>> {
         let record = record?;
         let row: Record = record.deserialize(Some(&header))?;
 
-        let record = db_v4.lookup(row.ip_from, None).await?.unwrap();
+        let record = match db_v4.lookup(row.ip_from, None).await? {
+            Some(x) => x,
+            None => {
+                if row.country_code.is_default() {
+                    continue;
+                } else {
+                    match row.ip_from {
+                        IpAddr::V4(ip) => {
+                            panic!("v4 {:?}", u32::from(ip));
+                        }
+                        IpAddr::V6(_) => {
+                            unreachable!()
+                        }
+                    }
+                }
+            }
+        };
         count_v4 += 1;
 
         assert!(record.ip_from >= row.ip_from);
@@ -78,14 +94,20 @@ async fn test_db11() -> Result<(), Box<dyn error::Error>> {
 
         let record = match db_v6.lookup(row.ip_from, None).await? {
             Some(x) => x,
-            None => match row.ip_from {
-                IpAddr::V4(_) => {
-                    unreachable!()
+            None => {
+                if row.country_code.is_default() {
+                    continue;
+                } else {
+                    match row.ip_from {
+                        IpAddr::V4(_) => {
+                            unreachable!()
+                        }
+                        IpAddr::V6(ip) => {
+                            panic!("v6 {:?}", u128::from(ip));
+                        }
+                    }
                 }
-                IpAddr::V6(ip) => {
-                    panic!("v6 {:?}", u128::from(ip));
-                }
-            },
+            }
         };
         count_v6 += 1;
 
