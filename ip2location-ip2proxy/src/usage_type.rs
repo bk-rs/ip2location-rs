@@ -1,7 +1,7 @@
 //! [Ref](https://lite.ip2location.com/database/px6-ip-proxytype-country-region-city-isp-domain-usagetype#database-fields)
 
 //
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
     derive(

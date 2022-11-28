@@ -315,7 +315,7 @@ mod tests {
     #[test]
     fn test_parse() -> Result<(), Box<dyn error::Error>> {
         for path in ip2location_bin_files().iter() {
-            let mut f = File::open(&path)?;
+            let mut f = File::open(path)?;
             let mut buf = vec![0; HEADER_LEN as usize];
             f.read_exact(&mut buf)?;
 
@@ -333,7 +333,7 @@ mod tests {
         }
 
         for path in ip2proxy_bin_files().iter() {
-            let mut f = File::open(&path)?;
+            let mut f = File::open(path)?;
 
             let mut buf = vec![0; HEADER_LEN as usize];
             f.read_exact(&mut buf)?;

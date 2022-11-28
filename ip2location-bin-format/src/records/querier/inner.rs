@@ -122,8 +122,8 @@ where
                 let mut record_field_contents = self.record_field_contents.to_owned();
                 for (n, record_field_content) in record_field_contents.iter_mut().enumerate() {
                     let index = match ip {
-                        IpAddr::V4(_) => 4 + n as usize * 4,
-                        IpAddr::V6(_) => 16 + n as usize * 4,
+                        IpAddr::V4(_) => 4 + n * 4,
+                        IpAddr::V6(_) => 16 + n * 4,
                     };
 
                     let content_index =
