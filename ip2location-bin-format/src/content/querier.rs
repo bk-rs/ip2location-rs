@@ -39,7 +39,7 @@ impl<S> Querier<S> {
             },
             static_cache: BTreeMap::default(),
             #[cfg(feature = "lru")]
-            lru_cache: lru::LruCache::new(10000),
+            lru_cache: lru::LruCache::new(core::num::NonZeroUsize::new(10000).expect("")),
         }
     }
 }

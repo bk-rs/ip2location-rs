@@ -37,17 +37,17 @@ ip2location-bin-format = { version = "0.3", default-features = false, features =
 
 futures-util = { version = "0.3", default-features = false, features = ["std", "io"] }
 
-serde = { version = "1.0", default_features = false, features = ["std", "derive"], optional = true }
+serde = { version = "1", default_features = false, features = ["std", "derive"], optional = true }
 country-code = { version = "0.2", default-features = false, features = ["std"] }
 
-tokio = { version = "1.17", default-features = false, features = ["fs"], optional = true }
+tokio = { version = "1", default-features = false, features = ["fs"], optional = true }
 async-compat = { version = "0.2", default-features = false, optional = true }
 async-fs = { version = "1.5", default-features = false, optional = true }
 
 [dev-dependencies]
-tokio = { version = "1.17", features = ["macros", "rt", "rt-multi-thread"] }
+tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread"] }
 
-csv = { version = "1.1" }
+csv = { version = "1" }
 rand = { version = "0.8" }
 
 [package.metadata.cargo-all-features]
