@@ -186,9 +186,9 @@ mod tests {
     use std::{error, io::ErrorKind as IoErrorKind};
 
     #[tokio::test]
-    async fn test_new_and_lookup_20220329() -> Result<(), Box<dyn error::Error>> {
-        let path_bin_v4 = "data/ip2location-lite/20220329/IP2LOCATION-LITE-DB11.BIN";
-        let path_bin_v6 = "data/ip2location-lite/20220329/IP2LOCATION-LITE-DB11.IPV6.BIN";
+    async fn test_new_and_lookup_20221101() -> Result<(), Box<dyn error::Error>> {
+        let path_bin_v4 = "data/ip2location-lite/20221101/IP2LOCATION-LITE-DB11.BIN";
+        let path_bin_v6 = "data/ip2location-lite/20221101/IP2LOCATION-LITE-DB11.IPV6.BIN";
 
         let db_v4 = match Database::<TokioFile>::new(path_bin_v4, 1).await {
             Ok(x) => Some(x),
@@ -215,7 +215,7 @@ mod tests {
                 .await?
                 .unwrap();
             assert_eq!(record_1.country_code.to_string(), "US");
-            assert_eq!(record_1.latitude.unwrap(), 34.052_23);
+            assert_eq!(record_1.latitude.unwrap(), 34.052_86);
 
             let selected_fields = &[
                 RecordField::CountryCodeAndName,

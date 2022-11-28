@@ -5,7 +5,7 @@ set -ex
 script_path=$(cd $(dirname $0) ; pwd -P)
 script_path_root="${script_path}/"
 
-tmp_file="/tmp/ip2location_lite_20220329_field_length_count.txt"
+tmp_file="/tmp/ip2location_lite_field_length_count.txt"
 
 awk -F "\"*,\"*" -v OFS=' ' '{print length($3), length($4), length($5), length($6), length($9), length($10)}' "${script_path_root}IP2LOCATION-LITE-DB11.CSV" > ${tmp_file}
 

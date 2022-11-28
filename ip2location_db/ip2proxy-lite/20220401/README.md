@@ -1,7 +1,7 @@
 # Files
 
 ```
-ll . | grep -v README | grep -v .ZIP | awk '{print $9}'
+ll . | grep -e .BIN$ -e .CSV$ | awk '{print $9}'
 
 IP2PROXY-LITE-PX10.BIN
 IP2PROXY-LITE-PX11.BIN

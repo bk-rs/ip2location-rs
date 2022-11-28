@@ -9,10 +9,10 @@ use ip2location_ip2location::{
 
 #[tokio::test]
 async fn test_db11() -> Result<(), Box<dyn error::Error>> {
-    let path_csv_v4 = "data/ip2location-lite/20220329/IP2LOCATION-LITE-DB11.CSV";
-    let path_csv_v6 = "data/ip2location-lite/20220329/IP2LOCATION-LITE-DB11.IPV6.CSV";
-    let path_bin_v4 = "data/ip2location-lite/20220329/IP2LOCATION-LITE-DB11.BIN";
-    let path_bin_v6 = "data/ip2location-lite/20220329/IP2LOCATION-LITE-DB11.IPV6.BIN";
+    let path_csv_v4 = "data/ip2location-lite/20221101/IP2LOCATION-LITE-DB11.CSV";
+    let path_csv_v6 = "data/ip2location-lite/20221101/IP2LOCATION-LITE-DB11.IPV6.CSV";
+    let path_bin_v4 = "data/ip2location-lite/20221101/IP2LOCATION-LITE-DB11.BIN";
+    let path_bin_v6 = "data/ip2location-lite/20221101/IP2LOCATION-LITE-DB11.IPV6.BIN";
 
     //
     let mut csv_rdr_v4 = ReaderBuilder::new()

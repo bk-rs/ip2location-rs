@@ -5,7 +5,7 @@ set -ex
 script_path=$(cd $(dirname $0) ; pwd -P)
 script_path_root="${script_path}/"
 
-tmp_file="/tmp/ip2proxy_lite_20220401_field_length_count.txt"
+tmp_file="/tmp/ip2proxy_lite_field_length_count.txt"
 
 awk -F "\"*,\"*" -v OFS=' ' '{print length($3), length($4), length($5), length($6), length($7), length($8), length($9), length($10), length($11), length($12), length($13), length($14), length($15)}' "${script_path_root}IP2PROXY-LITE-PX11.CSV" > ${tmp_file}
 
