@@ -186,8 +186,8 @@ mod tests {
     use std::{error, io::ErrorKind as IoErrorKind};
 
     #[tokio::test]
-    async fn test_new_and_lookup_20220401() -> Result<(), Box<dyn error::Error>> {
-        let path_bin = "data/ip2proxy-lite/20220401/IP2PROXY-LITE-PX11.BIN";
+    async fn test_new_and_lookup_20221101() -> Result<(), Box<dyn error::Error>> {
+        let path_bin = "data/ip2proxy-lite/20221101/IP2PROXY-LITE-PX11.BIN";
 
         let db = match Database::<TokioFile>::new(path_bin, 1).await {
             Ok(x) => Some(x),
@@ -219,7 +219,7 @@ mod tests {
 
             let record_3 = db
                 .lookup(
-                    Ipv6Addr::from(58569071813452613185929873510317667680).into(),
+                    Ipv6Addr::from(58569071808060804026606586837353981081).into(),
                     None,
                 )
                 .await?
