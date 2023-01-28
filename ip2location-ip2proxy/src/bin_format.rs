@@ -88,7 +88,7 @@ pub enum DatabaseNewError {
 
 impl fmt::Display for DatabaseNewError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 
@@ -172,7 +172,7 @@ pub enum DatabaseLookupError {
 
 impl fmt::Display for DatabaseLookupError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 
@@ -196,7 +196,7 @@ mod tests {
             {
                 None
             }
-            Err(err) => panic!("{:?}", err),
+            Err(err) => panic!("{err:?}"),
         };
 
         if let Some(db) = db {
@@ -215,7 +215,7 @@ mod tests {
                 .await?
                 .unwrap();
             assert_eq!(record_2.country_code.to_string(), "AU");
-            println!("{:?}", record_2);
+            println!("{record_2:?}");
 
             let record_3 = db
                 .lookup(

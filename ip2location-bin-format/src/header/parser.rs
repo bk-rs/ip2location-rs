@@ -289,7 +289,7 @@ pub enum ParseError {
 
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 
@@ -324,10 +324,10 @@ mod tests {
             match parser.parse(&mut Cursor::new(buf))? {
                 ControlFlow::Break((_, schema)) => {
                     assert_eq!(schema.r#type, SchemaType::IP2Location);
-                    println!("path:{:?}, schema:{:?}", path, schema);
+                    println!("path:{path:?}, schema:{schema:?}");
                 }
                 x => {
-                    panic!("path:{:?}, ret:{:?}, parser:{:?}", path, x, parser)
+                    panic!("path:{path:?}, ret:{x:?}, parser:{parser:?}")
                 }
             }
         }
@@ -343,10 +343,10 @@ mod tests {
             match parser.parse(&mut Cursor::new(buf))? {
                 ControlFlow::Break((_, schema)) => {
                     assert_eq!(schema.r#type, SchemaType::IP2Proxy);
-                    println!("path:{:?}, schema:{:?}", path, schema);
+                    println!("path:{path:?}, schema:{schema:?}");
                 }
                 x => {
-                    panic!("path:{:?}, ret:{:?}, parser:{:?}", path, x, parser)
+                    panic!("path:{path:?}, ret:{x:?}, parser:{parser:?}")
                 }
             }
         }

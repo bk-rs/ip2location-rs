@@ -8,11 +8,11 @@ use ip2location_country_information::RECORDS_COUNTRY_CODE_MAP;
 fn test_static() {
     //
     let record = RECORDS_COUNTRY_CODE_MAP.get(&CountryCode::US).unwrap();
-    println!("{:?}", record);
+    println!("{record:?}");
     assert_eq!(record.country_name, "United States of America".into());
 
     //
     let record = RECORDS_COUNTRY_CODE_MAP.get(&CountryCode::AQ).unwrap();
-    println!("{:?}", record);
+    println!("{record:?}");
     assert_eq!(record.currency_code, CurrencyCode::Other("".into()));
 }

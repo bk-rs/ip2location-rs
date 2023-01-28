@@ -88,7 +88,7 @@ pub enum DatabaseNewError {
 
 impl fmt::Display for DatabaseNewError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 
@@ -172,7 +172,7 @@ pub enum DatabaseLookupError {
 
 impl fmt::Display for DatabaseLookupError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 
@@ -197,7 +197,7 @@ mod tests {
             {
                 None
             }
-            Err(err) => panic!("{:?}", err),
+            Err(err) => panic!("{err:?}"),
         };
         let db_v6 = match Database::<TokioFile>::new(path_bin_v6, 1).await {
             Ok(x) => Some(x),
@@ -206,7 +206,7 @@ mod tests {
             {
                 None
             }
-            Err(err) => panic!("{:?}", err),
+            Err(err) => panic!("{err:?}"),
         };
 
         if let Some(db_v4) = db_v4 {
@@ -227,7 +227,7 @@ mod tests {
                 .await?
                 .unwrap();
             assert_eq!(record_2.country_code.to_string(), "CN");
-            println!("{:?}", record_2);
+            println!("{record_2:?}");
         }
 
         if let Some(db_v6) = db_v6 {
@@ -250,7 +250,7 @@ mod tests {
                 .await?
                 .unwrap();
             assert_eq!(record_2.country_code.to_string(), "CN");
-            println!("{:?}", record_2);
+            println!("{record_2:?}");
         }
 
         Ok(())

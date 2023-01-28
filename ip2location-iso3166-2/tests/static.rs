@@ -12,20 +12,20 @@ fn test_static() {
     let record = RECORDS_CODE_MAP
         .get(&SubdivisionCode::US(USSubdivisionCode::NY))
         .unwrap();
-    println!("{:?}", record);
+    println!("{record:?}");
     assert_eq!(record.subdivision_name, "New York".into());
 
     //
     let record = RECORDS_CODE_MAP
         .get(&SubdivisionCode::CN(CNSubdivisionCode::BJ))
         .unwrap();
-    println!("{:?}", record);
+    println!("{record:?}");
     assert_eq!(record.subdivision_name, "Beijing".into());
 
     //
     let record = RECORDS_CODE_MAP
         .get(&SubdivisionCode::Other(CountryCode::AI, None))
         .unwrap();
-    println!("{:?}", record);
+    println!("{record:?}");
     assert_eq!(record.subdivision_name, "Anguilla".into());
 }

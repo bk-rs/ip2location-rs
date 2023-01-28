@@ -36,7 +36,7 @@ async fn test_db11() -> Result<(), Box<dyn error::Error>> {
     let mut count_v4 = 0;
     for (i, record) in csv_rdr_v4.records().enumerate() {
         if i % 100000 == 0 {
-            println!("v4 i:{}", i)
+            println!("v4 i:{i}")
         }
 
         if rand::random::<u8>() > 2 {
@@ -76,13 +76,13 @@ async fn test_db11() -> Result<(), Box<dyn error::Error>> {
         assert_eq!(record.zip_code, row.zip_code);
         assert_eq!(record.time_zone, row.time_zone);
     }
-    println!("count_v4:{}", count_v4);
+    println!("count_v4:{count_v4}");
 
     //
     let mut count_v6 = 0;
     for (i, record) in csv_rdr_v6.records().enumerate() {
         if i % 100000 == 0 {
-            println!("v6 i:{}", i)
+            println!("v6 i:{i}")
         }
 
         if rand::random::<u8>() > 2 {
@@ -122,7 +122,7 @@ async fn test_db11() -> Result<(), Box<dyn error::Error>> {
         assert_eq!(record.zip_code, row.zip_code);
         assert_eq!(record.time_zone, row.time_zone);
     }
-    println!("count_v6:{}", count_v6);
+    println!("count_v6:{count_v6}");
 
     Ok(())
 }

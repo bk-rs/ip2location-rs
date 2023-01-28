@@ -306,7 +306,7 @@ pub enum NewError {
 
 impl fmt::Display for NewError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 
@@ -464,7 +464,7 @@ pub enum LookupError {
 
 impl fmt::Display for LookupError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 

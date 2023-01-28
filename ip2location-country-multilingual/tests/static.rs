@@ -14,7 +14,7 @@ fn test_static() {
                 && x.country_alpha2_code == CountryCode::US
         })
         .unwrap();
-    println!("{:?}", record);
+    println!("{record:?}");
 
     //
     let record = RECORDS
@@ -24,5 +24,5 @@ fn test_static() {
                 && x.country_alpha2_code == CountryCode::US
         })
         .unwrap();
-    println!("{:?}", record);
+    println!("{record:?}");
 }
