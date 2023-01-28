@@ -1,4 +1,4 @@
-use core::{fmt, ops::Deref};
+use core::ops::Deref;
 use std::io::Read;
 
 use csv::{Error as CsvError, Reader};
@@ -62,8 +62,8 @@ pub enum RecordsFromCsvError {
     RecordDeFailed(CsvError),
 }
 
-impl fmt::Display for RecordsFromCsvError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl core::fmt::Display for RecordsFromCsvError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{self:?}")
     }
 }

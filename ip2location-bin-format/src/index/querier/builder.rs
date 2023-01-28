@@ -1,5 +1,3 @@
-use core::fmt;
-
 use crate::index::INDEX_LEN;
 
 //
@@ -42,8 +40,8 @@ pub enum BuildError {
     LenMismatch,
 }
 
-impl fmt::Display for BuildError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl core::fmt::Display for BuildError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{self:?}")
     }
 }

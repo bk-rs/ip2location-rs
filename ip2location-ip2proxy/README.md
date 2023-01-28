@@ -7,11 +7,11 @@
 ```rust
 #[cfg(feature = "tokio_fs")]
 {
-use std::{error, net::Ipv4Addr};
+use std::{net::Ipv4Addr};
 
 use ip2location_ip2proxy::bin_format::{Database, TokioFile};
 
-fn main() -> Result<(), Box<dyn error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let runtime = tokio::runtime::Runtime::new().unwrap();
 
     runtime.block_on(async move {

@@ -1,4 +1,4 @@
-use std::{error, fs::File, net::IpAddr};
+use std::{fs::File, net::IpAddr};
 
 use csv::{ReaderBuilder, StringRecord};
 use ip2location_ip2location::{
@@ -8,7 +8,7 @@ use ip2location_ip2location::{
 };
 
 #[tokio::test]
-async fn test_db11() -> Result<(), Box<dyn error::Error>> {
+async fn test_db11() -> Result<(), Box<dyn std::error::Error>> {
     let path_csv_v4 = "data/ip2location-lite/20221101/IP2LOCATION-LITE-DB11.CSV";
     let path_csv_v6 = "data/ip2location-lite/20221101/IP2LOCATION-LITE-DB11.IPV6.CSV";
     let path_bin_v4 = "data/ip2location-lite/20221101/IP2LOCATION-LITE-DB11.BIN";

@@ -1,4 +1,3 @@
-use core::{fmt, str};
 use std::{
     collections::BTreeMap,
     io::{Error as IoError, SeekFrom},
@@ -218,7 +217,7 @@ where
                 }
 
                 let s_len = self.buf[0];
-                let s = str::from_utf8(&self.buf[1..1 + s_len as usize])
+                let s = core::str::from_utf8(&self.buf[1..1 + s_len as usize])
                     .map_err(FillError::ToUtf8Failed)?;
 
                 match record_field_content {
@@ -339,12 +338,12 @@ fn filter_str(s: impl AsRef<str>) -> Option<Box<str>> {
 pub enum FillError {
     SeekFailed(IoError),
     ReadFailed(IoError),
-    ToUtf8Failed(str::Utf8Error),
+    ToUtf8Failed(core::str::Utf8Error),
     Other(&'static str),
 }
 
-impl fmt::Display for FillError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl core::fmt::Display for FillError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{self:?}")
     }
 }

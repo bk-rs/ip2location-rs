@@ -1,5 +1,3 @@
-use core::fmt;
-
 use super::HEADER_LEN;
 use crate::{index::INDEX_LEN, record_field::RecordFields};
 
@@ -152,8 +150,8 @@ pub enum VerifyError {
     Other(Box<str>),
 }
 
-impl fmt::Display for VerifyError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl core::fmt::Display for VerifyError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{self:?}")
     }
 }

@@ -1,4 +1,3 @@
-use core::fmt;
 use std::net::{IpAddr, Ipv4Addr};
 
 use futures_util::{AsyncRead, AsyncSeek};
@@ -49,8 +48,8 @@ pub enum NewError {
     RecordFieldsMissing,
 }
 
-impl fmt::Display for NewError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl core::fmt::Display for NewError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{self:?}")
     }
 }

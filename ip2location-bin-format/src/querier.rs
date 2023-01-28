@@ -1,4 +1,4 @@
-use core::{fmt, future::Future, ops::ControlFlow, pin::Pin};
+use core::{future::Future, ops::ControlFlow, pin::Pin};
 use std::{
     io::{Cursor, Error as IoError, SeekFrom},
     net::{IpAddr, Ipv4Addr, Ipv6Addr},
@@ -36,13 +36,13 @@ pub struct Querier<S> {
     pub content_pool: Pool<ContentQuerier<S>>,
 }
 
-impl<S> fmt::Debug for Querier<S>
+impl<S> core::fmt::Debug for Querier<S>
 where
-    Pool<RecordsV4Querier<S>>: fmt::Debug,
-    Option<Pool<RecordsV6Querier<S>>>: fmt::Debug,
-    Pool<ContentQuerier<S>>: fmt::Debug,
+    Pool<RecordsV4Querier<S>>: core::fmt::Debug,
+    Option<Pool<RecordsV6Querier<S>>>: core::fmt::Debug,
+    Pool<ContentQuerier<S>>: core::fmt::Debug,
 {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Querier")
             .field("header", &self.header)
             .field("index_v4", &self.index_v4)
@@ -304,8 +304,8 @@ pub enum NewError {
     RecordsV6QuerierNewFailed(RecordsV6QuerierNewError),
 }
 
-impl fmt::Display for NewError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl core::fmt::Display for NewError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{self:?}")
     }
 }
@@ -462,8 +462,8 @@ pub enum LookupError {
     ContentFillFailed(ContentFillError),
 }
 
-impl fmt::Display for LookupError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl core::fmt::Display for LookupError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{self:?}")
     }
 }
@@ -474,8 +474,6 @@ impl std::error::Error for LookupError {}
 mod tests {
     use super::*;
 
-    use std::error;
-
     use async_compat::Compat;
     use futures_util::TryFutureExt as _;
     use tokio::fs::File as TokioFile;
@@ -483,7 +481,7 @@ mod tests {
     use crate::test_helper::{ip2location_bin_files, ip2proxy_bin_files};
 
     #[tokio::test]
-    async fn test_new_and_lookup() -> Result<(), Box<dyn error::Error>> {
+    async fn test_new_and_lookup() -> Result<(), Box<dyn std::error::Error>> {
         let ips: &[IpAddr] = &[
             Ipv4Addr::new(0, 0, 0, 0).into(),
             Ipv4Addr::new(255, 255, 255, 255).into(),

@@ -5,7 +5,6 @@ pub type TokioFile = async_compat::Compat<tokio::fs::File>;
 #[cfg(feature = "async_fs")]
 pub type AsyncFsFile = async_fs::File;
 
-use core::fmt;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 use futures_util::{AsyncRead, AsyncSeek};
@@ -20,11 +19,11 @@ pub struct Database<S> {
     pub inner: Querier<S>,
 }
 
-impl<S> fmt::Debug for Database<S>
+impl<S> core::fmt::Debug for Database<S>
 where
-    Querier<S>: fmt::Debug,
+    Querier<S>: core::fmt::Debug,
 {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Database")
             .field("inner", &self.inner)
             .finish()
@@ -86,8 +85,8 @@ pub enum DatabaseNewError {
     TypeMismatch,
 }
 
-impl fmt::Display for DatabaseNewError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl core::fmt::Display for DatabaseNewError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{self:?}")
     }
 }
@@ -170,8 +169,8 @@ pub enum DatabaseLookupError {
     ToRecordFailed(Box<str>),
 }
 
-impl fmt::Display for DatabaseLookupError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl core::fmt::Display for DatabaseLookupError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{self:?}")
     }
 }
@@ -183,10 +182,10 @@ impl std::error::Error for DatabaseLookupError {}
 mod tests {
     use super::*;
 
-    use std::{error, io::ErrorKind as IoErrorKind};
+    use std::io::ErrorKind as IoErrorKind;
 
     #[tokio::test]
-    async fn test_new_and_lookup_20221101() -> Result<(), Box<dyn error::Error>> {
+    async fn test_new_and_lookup_20221101() -> Result<(), Box<dyn std::error::Error>> {
         let path_bin_v4 = "data/ip2location-lite/20221101/IP2LOCATION-LITE-DB11.BIN";
         let path_bin_v6 = "data/ip2location-lite/20221101/IP2LOCATION-LITE-DB11.IPV6.BIN";
 

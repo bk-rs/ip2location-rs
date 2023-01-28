@@ -1,4 +1,4 @@
-use core::{fmt, ops::ControlFlow};
+use core::ops::ControlFlow;
 use std::io::{BufRead, Error as IoError, Read as _};
 
 use super::schema::{Schema, SchemaSubType, SchemaType, VerifyError};
@@ -287,8 +287,8 @@ pub enum ParseError {
     VerifyFailed(VerifyError),
 }
 
-impl fmt::Display for ParseError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl core::fmt::Display for ParseError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{self:?}")
     }
 }
@@ -305,7 +305,7 @@ impl From<IoError> for ParseError {
 mod tests {
     use super::*;
 
-    use std::{error, fs::File, io::Cursor};
+    use std::{fs::File, io::Cursor};
 
     use crate::{
         header::HEADER_LEN,
@@ -313,7 +313,7 @@ mod tests {
     };
 
     #[test]
-    fn test_parse() -> Result<(), Box<dyn error::Error>> {
+    fn test_parse() -> Result<(), Box<dyn std::error::Error>> {
         for path in ip2location_bin_files().iter() {
             let mut f = File::open(path)?;
             let mut buf = vec![0; HEADER_LEN as usize];
