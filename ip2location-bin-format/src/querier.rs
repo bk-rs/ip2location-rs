@@ -1,4 +1,4 @@
-use core::{future::Future, ops::ControlFlow, pin::Pin};
+use core::{cmp::max, future::Future, ops::ControlFlow, pin::Pin};
 use std::{
     io::{Cursor, Error as IoError, SeekFrom},
     net::{IpAddr, Ipv4Addr, Ipv6Addr},
@@ -65,6 +65,8 @@ where
     where
         F: FnMut() -> Pin<Box<dyn Future<Output = Result<S, IoError>> + Send + 'static>>,
     {
+        let pool_max_size = max(1, pool_max_size);
+
         let mut buf = vec![0; 1024 * 8];
 
         //
@@ -479,6 +481,25 @@ mod tests {
     use tokio::fs::File as TokioFile;
 
     use crate::test_helper::{ip2location_bin_files, ip2proxy_bin_files};
+
+    #[tokio::test]
+    async fn test_new_pool_max_size() -> Result<(), Box<dyn std::error::Error>> {
+        let path = match ip2location_bin_files().first().cloned() {
+            Some(x) => x,
+            None => return Ok(()),
+        };
+
+        for (pool_max_size, pool_assert_size) in &[(0, 1), (1, 1), (2, 2)] {
+            let q = Querier::new(
+                || Box::pin(TokioFile::open(path.clone()).map_ok(Compat::new)),
+                *pool_max_size,
+            )
+            .await?;
+            assert_eq!(q.content_pool.status().size, *pool_assert_size);
+        }
+
+        Ok(())
+    }
 
     #[tokio::test]
     async fn test_new_and_lookup() -> Result<(), Box<dyn std::error::Error>> {
