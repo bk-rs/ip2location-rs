@@ -42,7 +42,7 @@ country-code = { version = "0.2", default-features = false, features = ["std"] }
 
 tokio = { version = "1", default-features = false, features = ["fs"], optional = true }
 async-compat = { version = "0.2", default-features = false, optional = true }
-async-fs = { version = "1.5", default-features = false, optional = true }
+async-fs = { version = "1", default-features = false, optional = true }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread"] }
