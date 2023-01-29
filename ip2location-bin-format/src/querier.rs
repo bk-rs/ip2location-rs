@@ -541,14 +541,13 @@ mod tests {
                 assert!(ret.is_none());
             }
 
-            if path.as_os_str().to_str().map(|x| x.contains("/20221101")) == Some(true) {
-                q.lookup(
+            let out = q
+                .lookup(
                     Ipv6Addr::from(58569071813452613185929873510317667680).into(),
                     None,
                 )
-                .await?
-                .unwrap();
-            }
+                .await?;
+            assert!(out.is_some());
         }
 
         Ok(())

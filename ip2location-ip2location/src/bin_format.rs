@@ -185,9 +185,9 @@ mod tests {
     use std::io::ErrorKind as IoErrorKind;
 
     #[tokio::test]
-    async fn test_new_and_lookup_20221101() -> Result<(), Box<dyn std::error::Error>> {
-        let path_bin_v4 = "data/ip2location-lite/20221101/IP2LOCATION-LITE-DB11.BIN";
-        let path_bin_v6 = "data/ip2location-lite/20221101/IP2LOCATION-LITE-DB11.IPV6.BIN";
+    async fn test_new_and_lookup_latest() -> Result<(), Box<dyn std::error::Error>> {
+        let path_bin_v4 = "data/ip2location-lite/latest/IP2LOCATION-LITE-DB11.BIN";
+        let path_bin_v6 = "data/ip2location-lite/latest/IP2LOCATION-LITE-DB11.IPV6.BIN";
 
         let db_v4 = match Database::<TokioFile>::new(path_bin_v4, 1).await {
             Ok(x) => Some(x),

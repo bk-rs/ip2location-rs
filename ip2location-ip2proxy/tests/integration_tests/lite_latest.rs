@@ -9,9 +9,9 @@ use ip2location_ip2proxy::{
 
 #[tokio::test]
 async fn test_px11() -> Result<(), Box<dyn std::error::Error>> {
-    let path_csv_v4 = "data/ip2proxy-lite/20221101/IP2PROXY-LITE-PX11.CSV";
-    let path_csv_v6 = "data/ip2proxy-lite/20221101/IP2PROXY-LITE-PX11.IPV6.CSV";
-    let path_bin = "data/ip2proxy-lite/20221101/IP2PROXY-LITE-PX11.BIN";
+    let path_csv_v4 = "data/ip2proxy-lite/latest/IP2PROXY-LITE-PX11.CSV";
+    let path_csv_v6 = "data/ip2proxy-lite/latest/IP2PROXY-LITE-PX11.IPV6.CSV";
+    let path_bin = "data/ip2proxy-lite/latest/IP2PROXY-LITE-PX11.BIN";
 
     //
     let mut csv_rdr_v4 = ReaderBuilder::new()
