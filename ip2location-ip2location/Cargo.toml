@@ -1,6 +1,6 @@
 [package]
 name = "ip2location-ip2location"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["vkill <vkill.net@gmail.com>"]
 edition = "2021"
 description = "IP2Location™ IP Address Geolocation Database"
@@ -33,7 +33,7 @@ serde = ["dep:serde", "country-code/serde"]
 _integration_tests = ["tokio_fs", "serde"]
 
 [dependencies]
-ip2location-bin-format = { version = "0.3", default-features = false, features = ["lru"], path = "../ip2location-bin-format" }
+ip2location-bin-format = { version = "0.4", default-features = false, features = ["lru"], path = "../ip2location-bin-format" }
 
 futures-util = { version = "0.3", default-features = false, features = ["std", "io"] }
 

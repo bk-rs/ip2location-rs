@@ -1,6 +1,6 @@
 [package]
 name = "ip2location-bin-format"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["vkill <vkill.net@gmail.com>"]
 edition = "2021"
 description = "IP2Location BIN Format"
