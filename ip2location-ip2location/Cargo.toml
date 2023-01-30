@@ -38,7 +38,7 @@ ip2location-bin-format = { version = "0.3", default-features = false, features =
 futures-util = { version = "0.3", default-features = false, features = ["std", "io"] }
 
 serde = { version = "1", default_features = false, features = ["std", "derive"], optional = true }
-country-code = { version = "0.2", default-features = false, features = ["std"] }
+country-code = { version = "0.3", default-features = false, features = ["std"] }
 
 tokio = { version = "1", default-features = false, features = ["fs"], optional = true }
 async-compat = { version = "0.2", default-features = false, optional = true }

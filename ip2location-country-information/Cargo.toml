@@ -26,8 +26,8 @@ default = ["once_cell"]
 serde = { version = "1", default_features = false, features = ["std", "derive"] }
 csv = { version = "1", default_features = false }
 
-country-code = { version = "0.2", default-features = false, features = ["std", "serde"] }
-currency-code = { version = "0.2", default-features = false, features = ["std", "serde"] }
-language-code = { version = "0.2", default-features = false, features = ["std", "serde"] }
+country-code = { version = "0.3", default-features = false, features = ["std", "serde"] }
+currency-code = { version = "0.3", default-features = false, features = ["std", "serde"] }
+language-code = { version = "0.3", default-features = false, features = ["std", "serde"] }
 
 once_cell = { version = "1", default_features = false, features = ["std"], optional = true }

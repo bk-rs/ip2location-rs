@@ -21,3 +21,17 @@ cargo test -p ip2location-ip2proxy --features _integration_tests -- --nocapture
 
 cargo test -p ip2location-ip2location --features _integration_tests -- --nocapture
 ```
+
+## Publish order
+
+bk-rs/geography-rs country-code continent-code
+
+bk-rs/language-rs language-code
+
+bk-rs/currency-rs currency-code
+
+ip2location-bin-format
+
+ip2location-ip2location ip2location-ip2proxy
+
+ip2location-continent-multilingual ip2location-country-information ip2location-country-multilingual ip2location-iso3166-2
