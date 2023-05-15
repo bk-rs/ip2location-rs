@@ -18,7 +18,7 @@ pub mod datafusion {
     };
     use ipnetwork::IpNetwork;
 
-    use crate::record::Record;
+    use crate::{record::Record, UNKNOWN_STR};
 
     #[derive(Debug, Clone)]
     #[non_exhaustive]
@@ -39,14 +39,14 @@ pub mod datafusion {
                 Field::new("ip_from", DataType::UInt32, false),
                 Field::new("ip_to", DataType::UInt32, false),
                 Field::new("cidr", DataType::Utf8, false),
-                Field::new("asn", DataType::UInt32, false),
+                Field::new("asn", DataType::Utf8, false),
                 Field::new("as", DataType::Utf8, false),
             ]);
             let schema_v6 = Schema::new(vec![
                 Field::new("ip_from", DataType::Decimal128(39, 0), false),
                 Field::new("ip_to", DataType::Decimal128(39, 0), false),
                 Field::new("cidr", DataType::Utf8, false),
-                Field::new("asn", DataType::UInt32, false),
+                Field::new("asn", DataType::Utf8, false),
                 Field::new("as", DataType::Utf8, false),
             ]);
 
@@ -155,7 +155,7 @@ pub mod datafusion {
                                 )
                             })?
                             .value(0);
-                        if v == "-" {
+                        if v == UNKNOWN_STR {
                             None
                         } else {
                             Some(v.parse::<u32>().map_err(|err| {
@@ -178,7 +178,7 @@ pub mod datafusion {
                         })?
                         .value(0);
 
-                        if v == "-" {
+                        if v == UNKNOWN_STR {
                             None
                         } else {
                             Some(v.into())
@@ -273,7 +273,7 @@ pub mod datafusion {
                                 )
                             })?
                             .value(0);
-                        if v == "-" {
+                        if v == UNKNOWN_STR {
                             None
                         } else {
                             Some(v.parse::<u32>().map_err(|err| {
@@ -296,7 +296,7 @@ pub mod datafusion {
                         })?
                         .value(0);
 
-                        if v == "-" {
+                        if v == UNKNOWN_STR {
                             None
                         } else {
                             Some(v.into())

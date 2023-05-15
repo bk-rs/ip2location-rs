@@ -38,7 +38,6 @@ async fn test_db() -> Result<(), Box<dyn std::error::Error>> {
 
         let record = record?;
         let row: Record = record.deserialize(Some(&header))?;
-
         let record = match db.lookup(row.ip_from).await? {
             Some(x) => x,
             None => match row.ip_from {
