@@ -1,0 +1,52 @@
+[package]
+name = "ip2location-asn"
+version = "0.1.0"
+authors = ["vkill <vkill.net@gmail.com>"]
+edition = "2021"
+description = "IP2Location™ IP-ASN Database"
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/bk-rs/ip2location-rs"
+homepage = "https://github.com/bk-rs/ip2location-rs"
+documentation = "https://docs.rs/ip2location-asn"
+keywords = []
+categories = []
+readme = "README.md"
+exclude = [
+    "/data/**/*.BIN",
+    "/data/**/*.ZIP",
+    "/data/**/*.zip",
+    "/data/**/*.CSV",
+]
+rust-version = "1.60.0"
+
+[package.metadata.docs.rs]
+all-features = true
+
+[features]
+default = ["serde", "datafusion"]
+
+serde = ["dep:serde", "ipnetwork/serde"]
+
+datafusion = ["dep:datafusion", "arrow-schema"]
+
+_integration_tests = ["serde", "datafusion"]
+
+[dependencies]
+ipnetwork = { version = "0.20", default_features = false, optional = true }
+
+serde = { version = "1", default_features = false, features = ["std", "derive"], optional = true }
+
+datafusion = { version = "24", default_features = false, features = ["compression"], optional = true }
+arrow-schema = { version = "38", default_features = false, optional = true }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread"] }
+
+csv = { version = "1" }
+rand = { version = "0.8" }
+
+[package.metadata.cargo-all-features]
+skip_optional_dependencies = true
+denylist = [
+    "_integration_tests"
+]

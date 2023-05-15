@@ -22,6 +22,12 @@ cargo test -p ip2location-ip2proxy --features _integration_tests -- --nocapture
 cargo test -p ip2location-ip2location --features _integration_tests -- --nocapture
 ```
 
+```
+# Download IP2LOCATION-LITE-ASN.CSV.ZIP, IP2LOCATION-LITE-ASN.IPV6.CSV.ZIP to ip2location_db/asn-lite/latest, then decompose *.BIN and *.CSV
+
+cargo test -p ip2location-asn --features _integration_tests -- --nocapture
+```
+
 ## Publish order
 
 bk-rs/geography-rs country-code continent-code

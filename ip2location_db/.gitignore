@@ -1,3 +1,6 @@
+/asn-lite/**/*.ZIP
+/asn-lite/**/*.CSV
+
 /ip2location-lite/**/*.ZIP
 /ip2location-lite/**/*.CSV
 /ip2location-lite/**/*.BIN
