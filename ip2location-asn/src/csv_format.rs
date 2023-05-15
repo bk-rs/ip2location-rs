@@ -197,7 +197,7 @@ pub mod datafusion {
             let ip_u128 = u128::from(ip);
 
             let df = self
-                .data_frame_v4
+                .data_frame_v6
                 .to_owned()
                 .filter(
                     col("ip_from")
