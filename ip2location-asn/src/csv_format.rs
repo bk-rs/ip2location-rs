@@ -50,9 +50,15 @@ pub mod datafusion {
                 Field::new("as", DataType::Utf8, false),
             ]);
 
-            let csv_read_options_v4 = CsvReadOptions::new().has_header(false).schema(&schema_v4);
+            let csv_read_options_v4 = CsvReadOptions::new()
+                .schema(&schema_v4)
+                .has_header(false)
+                .file_extension("CSV");
 
-            let csv_read_options_v6 = CsvReadOptions::new().has_header(false).schema(&schema_v6);
+            let csv_read_options_v6 = CsvReadOptions::new()
+                .schema(&schema_v6)
+                .has_header(false)
+                .file_extension("CSV");
 
             let data_frame_v4 = ctx_v4
                 .read_csv(csv_path_v4.as_ref(), csv_read_options_v4)
